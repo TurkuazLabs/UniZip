@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+# 📄 Dosya Yolu: install.xml
+# 📌 Amac: Turkuaz Entitlement API OpenCart 3.x eklenti tanimini vermek
+# 📌 Modul - FileType
+# Version: 0.2.0
+# Aciklama: Multi-store, project_code ve product entitlement tabanli OCMOD paket bilgisi
+# Bagimli Oldugu Katman: Config
+-->
+<modification>
+    <name>Turkuaz Entitlement API</name>
+    <code>turkuaz_entitlement_api</code>
+    <version>0.2.0</version>
+    <author>Turkuaz</author>
+    <link>https://turkuaz.com</link>
+</modification>

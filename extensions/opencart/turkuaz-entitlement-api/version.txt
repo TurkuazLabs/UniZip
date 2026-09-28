@@ -1,0 +1,8 @@
+# 📄 Dosya Yolu: extensions/opencart/turkuaz-entitlement-api/version.txt
+# 📌 Amac: Turkuaz Entitlement API mevcut surumunu tek noktada tanimlamak
+# 📌 Modul - FileType
+# Version: 0.2.0
+# Aciklama: OCMOD paketleme scripti tarafindan okunan eklenti surumu
+# Bagimli Oldugu Katman: Config
+
+0.2.0

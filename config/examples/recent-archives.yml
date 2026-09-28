@@ -1,0 +1,11 @@
+# 📄 Dosya Yolu: userdata/recent-archives.yml
+# 📌 Amac: UniZip son acilan arsiv listesini saklamak
+# 📌 Modul - FileType
+# Version: 0.1.38
+# Aciklama: File menusu recent archives listesi
+
+# Bagimli Oldugu Katman: Config
+
+recent_archives:
+  - "/tmp/test-one.zip"
+  - "/tmp/test-two.zip"

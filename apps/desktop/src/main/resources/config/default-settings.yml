@@ -1,0 +1,40 @@
+# 📄 Dosya Yolu: apps/desktop/src/main/resources/config/default-settings.yml
+# 📌 Amac: UniZip varsayilan kullanici ayarlarini tanimlamak
+# 📌 Modul - FileType
+# Version: 0.1.61
+# Aciklama: ilk acilis icin varsayilan tema, dil, editor, klasor ve UniZip sistem ayarlari
+
+# Bagimli Oldugu Katman: Config | Language | View
+
+ui:
+  theme: "Turkuaz"
+  language: "tr"
+  show_parent_folder_item: true
+  show_exact_sizes: false
+  select_full_row: true
+  show_system_menu: false
+
+edit:
+  open_text_on_double_click: true
+  text_editor_command: "notepad.exe"
+  editable_text_extensions: "txt,md,csv,log,ini,conf,cfg,yml,yaml,json,xml,html,css,js,java,py,sql"
+  open_image_on_double_click: true
+  image_editor_command: "mspaint.exe"
+  editable_image_extensions: "png,jpg,jpeg,bmp,gif,tif,tiff,webp,jfif"
+  viewer_command: ""
+  diff_command: ""
+
+system:
+  archive_file_extensions: "zip,7z,rar,001,cab,iso,xz,txz,lzma,tar,gz,gzip,tgz,tpz,zst,tzst,bz2,bzip2,tbz,tbz2"
+  context_menu_enabled: false
+  group_context_menu: true
+  block_root_folder_duplication: true
+  use_large_memory_pages: false
+
+folders:
+  working_folder_mode: "system_temp"
+  working_folder_custom_path: ""
+
+license:
+  api_base_url: "https://example.com/index.php?route=extension/module/turkuaz_entitlement_api"
+  offline_grace_days: 7

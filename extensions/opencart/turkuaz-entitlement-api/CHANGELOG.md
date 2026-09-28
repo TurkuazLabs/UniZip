@@ -1,0 +1,16 @@
+# 📄 Dosya Yolu: extensions/opencart/turkuaz-entitlement-api/CHANGELOG.md
+# 📌 Amac: Turkuaz Entitlement API surum degisikliklerini kaydetmek
+# 📌 Modul - FileType
+# Version: 0.2.0
+# Aciklama: OpenCart 3.x multi-store entitlement API ilk genel surum kaydi
+Bagimli Oldugu Katman: Controller | Service | Repo/Model | View | Language | Config
+
+# Changelog
+
+## 0.2.0
+
+- Multi-store ayrimi eklendi.
+- `project_code` destekli hak modeli eklendi.
+- UniZip yazilim lisansi login/validate/logout endpointleri eklendi.
+- Ragnar pending/deliver endpointleri eklendi.
+- Product map tabanli entitlement ayari eklendi.

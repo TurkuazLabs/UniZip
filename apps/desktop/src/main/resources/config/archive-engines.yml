@@ -1,0 +1,47 @@
+# 📄 Dosya Yolu: apps/desktop/src/main/resources/config/archive-engines.yml
+# 📌 Amac: UniZip arsiv motorlari icin capability dokumantasyon kaydi tutmak
+# 📌 Modul - FileType
+# Version: 0.1.61
+# Aciklama: Built-in ve gelecekteki plugin engine desteklerinin standart manifest ornegi
+# Bagimli Oldugu Katman: Config | Tool
+
+engines:
+  - id: unizip.engine.zip.java
+    enabled: true
+    format: zip
+    class: com.unizip.desktop.tools.ZipArchiveEngine
+    extensions: zip,jar,war,ear
+    signatures: 50 4B 03 04 | 50 4B 05 06 | 50 4B 07 08
+    capabilities:
+      list: true
+      extract: true
+      test: true
+      add: true
+      delete: true
+      rename: true
+      edit_save_back: true
+      create: true
+      password_read: false
+      password_write: false
+      solid_archive: false
+      multi_volume: false
+
+  - id: unizip.engine.7z.placeholder
+    enabled: false
+    format: 7z
+    class: com.unizip.desktop.tools.SevenZArchiveEngine
+    extensions: 7z
+    signatures: 37 7A BC AF 27 1C
+    capabilities:
+      list: false
+      extract: false
+      test: false
+      add: false
+      delete: false
+      rename: false
+      edit_save_back: false
+      create: false
+      password_read: false
+      password_write: false
+      solid_archive: true
+      multi_volume: false

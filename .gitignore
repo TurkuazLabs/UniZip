@@ -1,0 +1,47 @@
+# 📄 Dosya Yolu: .gitignore
+# 📌 Amac: UniZip monoreposunda Git'e alinmayacak build, IDE, runtime ve secret dosyalarini belirlemek
+# 📌 Modul - FileType
+# Version: 0.1.61
+# Aciklama: Java, Maven, OpenCart package, IDE, runtime ve gizli dosya dislama kurallari
+# Bagimli Oldugu Katman: Config
+
+# Java / Maven
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+**/target/
+.mvn/wrapper/maven-wrapper.jar
+
+# Build output
+build/
+dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+nbproject/private/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# UniZip runtime
+userdata/*
+!userdata/.gitkeep
+releases/*.zip
+releases/*.exe
+releases/*.msi
+releases/*.dmg
+releases/*.deb
+
+# Secrets
+*.env
+*.pem
+*.key
+*.pfx
+*.p12
+private.key
+license-signing-key.*

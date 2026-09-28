@@ -1,0 +1,71 @@
+# 📄 Dosya Yolu: apps/desktop/src/main/resources/themes/bandizip-classic.yml
+# 📌 Amac: UniZip Turkuaz tema tokenlarini tutmak
+# 📌 Modul - FileType
+# Version: 0.1.57
+# Aciklama: cini turkuaz, lacivert ve beyaz tonlarini modern klasik duzenle kullanir
+
+# Bagimli Oldugu Katman: View | Config
+
+theme:
+  id: "Turkuaz"
+  name: "Turkuaz"
+  mode: "light"
+  author: "UniZip"
+
+colors:
+  window.background: "#FFFFFF"
+  menu.background: "#FBFDFF"
+  ribbon.top: "#05B7C9"
+  ribbon.bottom: "#0096B5"
+  ribbon.border: "#D4E8EE"
+  ribbon.foreground: "#FFFFFF"
+  panel.background: "#FFFFFF"
+  panel.border: "#D7E4EA"
+  panel.divider: "#D1E0E7"
+  sidebar.background: "#FBFDFF"
+  tree.background: "#FBFDFF"
+  preview.background: "#FFFFFF"
+  grid.background: "#FFFFFF"
+  grid.selection.background: "#D7F4F6"
+  grid.selection.border: "#04A7B8"
+  table.background: "#FFFFFF"
+  table.foreground: "#102033"
+  table.header.background: "#FBFDFF"
+  table.header.foreground: "#102033"
+  table.selection.background: "#02A7B8"
+  table.selection.foreground: "#FFFFFF"
+  status.background: "#FBFDFF"
+  status.border: "#D1E0E7"
+  progress.background: "#EAF3F6"
+  progress.foreground: "#02A7B8"
+  text.primary: "#102033"
+  text.secondary: "#596B7A"
+  text.muted: "#7F8F9B"
+  accent.primary: "#02A7B8"
+  accent.primary.dark: "#007E9A"
+  accent.secondary: "#002B8A"
+  accent.soft: "#D7F4F6"
+  success: "#159E73"
+  warning: "#E2A21A"
+  danger: "#D84A4A"
+
+fonts:
+  default.family: "Segoe UI"
+  default.size: 13
+  menu.family: "Segoe UI"
+  menu.size: 13
+  toolbar.family: "Segoe UI"
+  toolbar.size: 13
+  grid.family: "Segoe UI"
+  grid.size: 12
+  title.family: "Segoe UI"
+  title.size: 15
+  mono.family: "Consolas"
+  mono.size: 12
+
+spacing:
+  xs: 4
+  sm: 8
+  md: 12
+  lg: 16
+  xl: 24

@@ -1,0 +1,26 @@
+<!--
+# 📄 Dosya Yolu: pom.xml
+# 📌 Amac: UniZip monorepo Maven modullerini tek build girisinde toplamak
+# 📌 Modul - FileType
+# Version: 0.1.61
+# Aciklama: Desktop modulu icin root aggregator Maven yapisi
+
+Bagimli Oldugu Katman: Config
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.unizip</groupId>
+    <artifactId>unizip-platform</artifactId>
+    <version>0.1.61</version>
+    <packaging>pom</packaging>
+
+    <name>UniZip Platform</name>
+    <description>UniZip Desktop ve OpenCart entegrasyon monoreposu</description>
+
+    <modules>
+        <module>apps/desktop</module>
+    </modules>
+</project>

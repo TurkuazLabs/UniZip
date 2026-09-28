@@ -1,0 +1,78 @@
+# 📄 Dosya Yolu: .github/workflows/release-package.yml
+# 📌 Amac: UniZip tag yayinlarinda Desktop portable paket, update manifest ve OpenCart OCMOD uretmek
+# 📌 Modul - FileType
+# Version: 0.1.61
+# Aciklama: Maven build, ZIP paket, SHA-256 manifest ve OCMOD artifact pipeline tanimi
+# Bagimli Oldugu Katman: Tool | Config
+
+name: UniZip Release Package
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  package-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Resolve Versions
+        shell: pwsh
+        run: |
+          $desktopVersion = (Get-Content version.txt -Raw).Trim()
+          $extensionVersion = (Get-Content extensions/opencart/turkuaz-entitlement-api/version.txt -Raw).Trim()
+          "UNIZIP_VERSION=$desktopVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "ENTITLEMENT_VERSION=$extensionVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build And Test Desktop
+        run: mvn -B clean verify dependency:copy-dependencies -pl apps/desktop -DincludeScope=runtime -DoutputDirectory=target/lib
+
+      - name: Build Portable Directory
+        shell: pwsh
+        run: |
+          $dist = "dist/UniZip_v${env:UNIZIP_VERSION}_portable"
+          New-Item -ItemType Directory -Force -Path "$dist/lib" | Out-Null
+          Copy-Item "apps/desktop/target/unizip-desktop-${env:UNIZIP_VERSION}.jar" "$dist/UniZip.jar"
+          Copy-Item "apps/desktop/target/lib/*" "$dist/lib/"
+          Copy-Item "LICENSE.md" "$dist/LICENSE.md"
+          @'
+          @echo off
+          REM # 📄 Dosya Yolu: UniZip.bat
+          REM # 📌 Amac: UniZip portable Java uygulamasini baslatmak
+          REM # 📌 Modul - FileType
+          REM Version: 0.1.61
+          REM Aciklama: Java 21 classpath ile UniZip Desktop baslatir
+          java -cp "UniZip.jar;lib/*" com.unizip.desktop.MainApp %*
+          '@ | Set-Content "$dist/UniZip.bat" -Encoding ASCII
+          Compress-Archive -Path "$dist/*" -DestinationPath "dist/UniZip_v${env:UNIZIP_VERSION}_portable.zip" -Force
+
+      - name: Generate Update Manifest
+        shell: pwsh
+        run: |
+          $asset = "UniZip_v${env:UNIZIP_VERSION}_portable.zip"
+          $url = "https://unizip.turkuaz.com/releases/stable/$asset"
+          python scripts/generate-update-manifest.py --file "dist/$asset" --version "$env:UNIZIP_VERSION" --download-url "$url" --output "dist/update.yml" --published-at "${{ github.event.head_commit.timestamp }}" --notes "UniZip stable release"
+
+      - name: Build OpenCart OCMOD
+        run: python scripts/build-opencart-extension.py
+
+      - name: Upload Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: unizip-release-${{ env.UNIZIP_VERSION }}
+          path: |
+            dist/UniZip_v${{ env.UNIZIP_VERSION }}_portable.zip
+            dist/update.yml
+            dist/turkuaz_entitlement_api_v${{ env.ENTITLEMENT_VERSION }}_oc3.ocmod.zip
