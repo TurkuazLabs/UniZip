@@ -1,11 +1,20 @@
 # 📄 Dosya Yolu: CHANGELOG.md
 # 📌 Amac: UniZip monorepo seviyesindeki yapisal degisiklikleri kaydetmek
 # 📌 Modul - FileType
-# Version: 0.2.0
-# Aciklama: Desktop ve OpenCart paketlerinin tek repository altinda birlestirilmesi
+# Version: 0.3.0
+# Aciklama: Desktop public runtime bootstrap ve monorepo yapisal degisikliklerini kaydeder
 Bagimli Oldugu Katman: Config | Tool
 
 # Changelog
+
+## 0.3.0-desktop-runtime-bootstrap
+
+- `DesktopRuntimeServices` public composition modeli eklendi.
+- `MainApp.launch(args, runtimeServices)` public edition-neutral bootstrap hook eklendi.
+- Community `main()` ayni default `CommunityUpdateSourcePolicyService` davranisini korur.
+- Private/harici edition dagitimlari public update source policy portunu runtime'da enjekte edebilir.
+- Community repository Pro kaynak koduna bagimli hale gelmedi.
+- Desktop release version 0.3.0'a cikarildi.
 
 ## 0.2.0-update-source-port
 
