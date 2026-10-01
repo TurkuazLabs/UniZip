@@ -2,8 +2,8 @@
 # 📄 Dosya Yolu: apps/desktop/pom.xml
 # 📌 Amac: UniZip Desktop Maven proje ayarlarini tanimlamak
 # 📌 Modul - FileType
-# Version: 0.1.61
-# Aciklama: Java 21 desktop uygulama build ayarlari ve v0.1.61 paket surumu
+# Version: 0.2.0
+# Aciklama: Java 21 desktop uygulama build ayarlari ve v0.2.0 public update source contract surumu
 
 Bagimli Oldugu Katman: Config
 -->
@@ -14,7 +14,7 @@ Bagimli Oldugu Katman: Config
 
     <groupId>com.unizip</groupId>
     <artifactId>unizip-desktop</artifactId>
-    <version>0.1.61</version>
+    <version>0.2.0</version>
     <packaging>jar</packaging>
 
     <name>UniZip Desktop</name>

@@ -1,9 +1,20 @@
 # 📄 Dosya Yolu: apps/desktop/CHANGELOG.md
 # 📌 Amac: UniZip Community surum degisikliklerini listelemek
 # 📌 Modul - FileType
-# Version: 0.1.61
+# Version: 0.2.0
 # Aciklama: Lisans guard, feature gate, otomatik guncelleme ve release CI degisiklikleri
 Bagimli Oldugu Katman: Controller | Service | Repo/Model | Tool | View | Language | Config
+
+## v0.2.0
+
+- `UpdateSourcePolicyService` public extension portu eklendi.
+- Community update source policy implementasyonu eklendi.
+- `UpdateSource` public contract modeli eklendi.
+- Kanal bazli manifest URL template destegi eklendi.
+- Exact stable manifest davranisi geriye uyumlu korundu.
+- Alternatif kanal icin eksik template token fail-closed reddedilir.
+- Update download boyut ve SHA-256 dogrulama akisi degistirilmeden korundu.
+- Public port ve template regression testleri eklendi.
 
 ## v0.1.61
 

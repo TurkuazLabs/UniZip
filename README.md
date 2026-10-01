@@ -1,7 +1,7 @@
 # 📄 Dosya Yolu: README.md
 # 📌 Amac: UniZip Community monorepo yapisini, edition sinirlarini ve gelistirme komutlarini aciklamak
 # 📌 Modul - FileType
-# Version: 0.1.61
+# Version: 0.2.0
 # Aciklama: Desktop uygulamasi, OpenCart entegrasyonu, Community lisansi ve Pro ayrimini tanimlar
 Bagimli Oldugu Katman: Controller | Service | Repo/Model | Tool | View | Language | Config
 
@@ -13,6 +13,7 @@ Bu public repository **UniZip Community Edition** kaynak kodunu barindirir.
 - `extensions/opencart/turkuaz-entitlement-api`: OpenCart 3.x entitlement entegrasyonunun public Community kaynaklari
 - `docs`: mimari, surum ve gelistirme dokumanlari
 - `scripts`: build, CI, paketleme ve release araclari
+- Public update source policy portu Community/Pro kanal ayrimini compile-time contract ile destekler
 
 ## Community ve Pro
 
@@ -109,5 +110,5 @@ scripts/configure-dual-remotes.sh
 
 ## Surumler
 
-- UniZip Desktop: `0.1.61`
+- UniZip Desktop: `0.2.0`
 - Turkuaz Entitlement API: `0.2.0`

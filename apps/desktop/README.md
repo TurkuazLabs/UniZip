@@ -1,11 +1,11 @@
 # 📄 Dosya Yolu: apps/desktop/README.md
 # 📌 Amac: UniZip Community projesinin kurulum, test, lisans ve guncelleme bilgisini vermek
 # 📌 Modul - FileType
-# Version: 0.1.61
+# Version: 0.2.0
 # Aciklama: Java 21 Maven tabanli ZIP yoneticisi community gelistirme paketi
 Bagimli Oldugu Katman: Controller | Service | Repo/Model | Tool | View | Language | Config
 
-# UniZip Community v0.1.61
+# UniZip Community v0.2.0
 
 ## Bu Surumde
 
@@ -13,6 +13,8 @@ Bagimli Oldugu Katman: Controller | Service | Repo/Model | Tool | View | Languag
 - Baglanti yoksa son basarili dogrulama ve offline grace suresi kullanilir.
 - Feature gate altyapisi Community/Pro ozelliklerini merkezi yonetir.
 - Stable kanal guncellemeleri acilista arka planda kontrol edilir.
+- `UpdateSourcePolicyService` public portu ile edition-bagimsiz kanal secimi desteklenir.
+- Alternatif kanal manifest adresleri `{channel}` template uzerinden fail-closed cozulur.
 - Yeni surum varsa indirme onayi gosterilir.
 - Indirilen paket boyut ve SHA-256 ile dogrulanir.
 - Dogrulanan paket `userdata/updates` klasorune kaydedilir.
@@ -58,7 +60,7 @@ HTTP yalnizca `localhost` testinde kabul edilir. Gercek guncelleme adresi HTTPS 
 
 ## Guvenli Kurulum Siniri
 
-v0.1.61 paketi otomatik kontrol ve guvenli indirme yapar; calisan uygulama dosyalarini kendi uzerine yazmaz. Inno Setup/jpackage tamamlandiginda dogrulanan installer uygulama kapatilarak baslatilacaktir.
+v0.2.0 paketi otomatik kontrol ve guvenli indirme yapar; calisan uygulama dosyalarini kendi uzerine yazmaz. Inno Setup/jpackage tamamlandiginda dogrulanan installer uygulama kapatilarak baslatilacaktir.
 
 ## Calistirma
 
