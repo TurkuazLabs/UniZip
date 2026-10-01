@@ -2,8 +2,8 @@
 # 📄 Dosya Yolu: apps/desktop/src/main/java/com/unizip/desktop/MainApp.java
 # 📌 Amac: UniZip Desktop uygulamasini baslatmak
 # 📌 Modul - FileType
-# Version: 0.2.0
-# Aciklama: Lisans guard, feature gate, public update source policy, Explorer CLI ve arsiv acma baglantilarini kurar
+# Version: 0.3.0
+# Aciklama: Community default veya harici edition runtime service bundle ile lisans, update policy, Explorer CLI ve arsiv acma baglantilarini kurar
 
 Bagimli Oldugu Katman: Controller | Service | View
 */
@@ -18,7 +18,7 @@ import com.unizip.desktop.repositories.UpdateConfigRepository;
 import com.unizip.desktop.repositories.UpdateRepository;
 import com.unizip.desktop.repositories.LicenseRepository;
 import com.unizip.desktop.services.ArchiveService;
-import com.unizip.desktop.services.CommunityUpdateSourcePolicyService;
+import com.unizip.desktop.services.DesktopRuntimeServices;
 import com.unizip.desktop.services.FeatureGateService;
 import com.unizip.desktop.services.FileAssociationService;
 import com.unizip.desktop.services.LanguageService;
@@ -59,10 +59,32 @@ public final class MainApp {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> start(args));
+        launch(
+                args,
+                DesktopRuntimeServices.community());
     }
 
-    private static void start(String[] args) {
+    public static void launch(
+            String[] args,
+            DesktopRuntimeServices runtimeServices) {
+        DesktopRuntimeServices safeRuntimeServices =
+                java.util.Objects.requireNonNull(
+                        runtimeServices,
+                        "runtimeServices");
+        String[] safeArgs =
+                args == null
+                        ? new String[0]
+                        : args.clone();
+
+        SwingUtilities.invokeLater(
+                () -> start(
+                        safeArgs,
+                        safeRuntimeServices));
+    }
+
+    private static void start(
+            String[] args,
+            DesktopRuntimeServices runtimeServices) {
         SimpleYamlTool yamlTool = new SimpleYamlTool();
         SettingsRepository settingsRepository = new SettingsRepository();
         ThemeService themeService = new ThemeService(yamlTool, settingsRepository);
@@ -84,7 +106,7 @@ public final class MainApp {
                 new VersionTool(),
                 checksumTool,
                 featureGateService,
-                new CommunityUpdateSourcePolicyService()
+                runtimeServices.updateSourcePolicyService()
         );
 
         SafeExtractTool safeExtractTool = new SafeExtractTool();

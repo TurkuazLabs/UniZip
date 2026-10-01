@@ -1,13 +1,13 @@
 # 📄 Dosya Yolu: apps/desktop/src/main/resources/config/app.yml
 # 📌 Amac: UniZip uygulama varsayilan ayarlarini tutmak
 # 📌 Modul - YAML
-# Version: 0.2.0
-# Aciklama: UniZip Community v0.2.0 varsayilan uygulama, editor, klasor, lisans ve update source ayarlari
+# Version: 0.3.0
+# Aciklama: UniZip Community v0.3.0 varsayilan uygulama, editor, klasor, lisans ve update source ayarlari
 # Bagimli Oldugu Katman: Config
 
 app:
   name: "UniZip"
-  version: "0.2.0"
+  version: "0.3.0"
 
 ui:
   theme: "Turkuaz"

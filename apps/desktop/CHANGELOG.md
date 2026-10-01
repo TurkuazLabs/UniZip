@@ -1,9 +1,17 @@
 # 📄 Dosya Yolu: apps/desktop/CHANGELOG.md
 # 📌 Amac: UniZip Community surum degisikliklerini listelemek
 # 📌 Modul - FileType
-# Version: 0.2.0
-# Aciklama: Lisans guard, feature gate, otomatik guncelleme ve release CI degisiklikleri
+# Version: 0.3.0
+# Aciklama: Public runtime bootstrap, lisans guard, feature gate, otomatik guncelleme ve release CI degisiklikleri
 Bagimli Oldugu Katman: Controller | Service | Repo/Model | Tool | View | Language | Config
+
+## v0.3.0
+
+- `DesktopRuntimeServices` public runtime service bundle eklendi.
+- `MainApp.launch(...)` ile edition-neutral runtime injection eklendi.
+- Community main entrypoint default Community policy ile geriye uyumlu korundu.
+- Pro/private dagitimlar public contract uzerinden kendi update source policy implementasyonunu enjekte edebilir.
+- Runtime bootstrap contract regression testleri eklendi.
 
 ## v0.2.0
 
