@@ -2,8 +2,8 @@
 # 📄 Dosya Yolu: apps/desktop/src/main/java/com/unizip/desktop/MainApp.java
 # 📌 Amac: UniZip Desktop uygulamasini baslatmak
 # 📌 Modul - FileType
-# Version: 0.1.61
-# Aciklama: Lisans guard, feature gate, otomatik guncelleme, Explorer CLI ve arsiv acma baglantilarini kurar
+# Version: 0.2.0
+# Aciklama: Lisans guard, feature gate, public update source policy, Explorer CLI ve arsiv acma baglantilarini kurar
 
 Bagimli Oldugu Katman: Controller | Service | View
 */
@@ -18,6 +18,7 @@ import com.unizip.desktop.repositories.UpdateConfigRepository;
 import com.unizip.desktop.repositories.UpdateRepository;
 import com.unizip.desktop.repositories.LicenseRepository;
 import com.unizip.desktop.services.ArchiveService;
+import com.unizip.desktop.services.CommunityUpdateSourcePolicyService;
 import com.unizip.desktop.services.FeatureGateService;
 import com.unizip.desktop.services.FileAssociationService;
 import com.unizip.desktop.services.LanguageService;
@@ -82,7 +83,8 @@ public final class MainApp {
                 new UpdateApiTool(yamlTool),
                 new VersionTool(),
                 checksumTool,
-                featureGateService
+                featureGateService,
+                new CommunityUpdateSourcePolicyService()
         );
 
         SafeExtractTool safeExtractTool = new SafeExtractTool();
