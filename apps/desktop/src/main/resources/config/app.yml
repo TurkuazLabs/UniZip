@@ -1,14 +1,13 @@
 # 📄 Dosya Yolu: apps/desktop/src/main/resources/config/app.yml
 # 📌 Amac: UniZip uygulama varsayilan ayarlarini tutmak
-# 📌 Modul - FileType
-# Version: 0.1.61
-# Aciklama: UniZip Community v0.1.61 varsayilan uygulama, editor, klasor ve menu ayarlari
-
+# 📌 Modul - YAML
+# Version: 0.2.0
+# Aciklama: UniZip Community v0.2.0 varsayilan uygulama, editor, klasor, lisans ve update source ayarlari
 # Bagimli Oldugu Katman: Config
 
 app:
   name: "UniZip"
-  version: "0.1.61"
+  version: "0.2.0"
 
 ui:
   theme: "Turkuaz"
@@ -45,10 +44,10 @@ license:
   api_route: "extension/module/turkuaz_entitlement_api"
   default_offline_grace_days: 7
 
-
 update:
   enabled: true
   check_on_startup: true
   auto_download: false
   channel: "stable"
   manifest_url: "https://unizip.turkuaz.com/releases/stable/update.yml"
+  manifest_url_template: "https://unizip.turkuaz.com/releases/{channel}/update.yml"
