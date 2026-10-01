@@ -2,7 +2,7 @@
 # 📄 Dosya Yolu: pom.xml
 # 📌 Amac: UniZip monorepo Maven modullerini tek build girisinde toplamak
 # 📌 Modul - FileType
-# Version: 0.1.61
+# Version: 0.2.0
 # Aciklama: Desktop modulu icin root aggregator Maven yapisi
 
 Bagimli Oldugu Katman: Config
@@ -14,7 +14,7 @@ Bagimli Oldugu Katman: Config
 
     <groupId>com.unizip</groupId>
     <artifactId>unizip-platform</artifactId>
-    <version>0.1.61</version>
+    <version>0.2.0</version>
     <packaging>pom</packaging>
 
     <name>UniZip Platform</name>
