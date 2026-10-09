@@ -1,7 +1,7 @@
 # 📄 Dosya Yolu: .github/workflows/ci.yml
 # 📌 Amac: GitHub uzerinde Desktop ve OpenCart modullerini otomatik dogrulamak
 # 📌 Modul - FileType
-# Version: 0.1.61
+# Version: 0.3.1
 # Aciklama: Java 21 Maven verify, PHP lint ve OCMOD artifact pipeline tanimi
 # Bagimli Oldugu Katman: Tool | Config
 
@@ -63,6 +63,9 @@ jobs:
       - name: PHP Syntax Check
         shell: bash
         run: find extensions/opencart/turkuaz-entitlement-api/upload -name '*.php' -type f -print0 | xargs -0 -n1 php -l
+
+      - name: OpenCart Customer Login Contract Smoke
+        run: php extensions/opencart/turkuaz-entitlement-api/tests/login_contract_smoke.php
 
       - name: Build OCMOD Package
         run: python3 scripts/build-opencart-extension.py
