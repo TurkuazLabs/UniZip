@@ -11,8 +11,8 @@ The shell integration stays in Community `FileAssociationService` and reuses the
 In the UniZip desktop app, open **Settings > System** and choose **Install Explorer context menu** or **Remove Explorer context menu**. These actions modify only `HKCU\Software\Classes` for the current Windows user; they do not set `.zip` default ProgID, delete Explorer UserChoice, or require Administrator privilege.
 
 Menu verbs:
-- Right-click `.zip`: UniZip > Open, Extract here, Extract into folder, Test archive.
-- Right-click file or folder: UniZip > Add to ZIP (generates a new ZIP in the same directory, and chooses a new name if the destination exists).
+- Right-click `.zip`: UniZip > Open, Extract here, Extract into folder, Test archive, Generate SHA-256 sidecar.
+- Right-click file: UniZip > Add to ZIP or Generate SHA-256 sidecar. Right-click directory: UniZip > Add to ZIP (generates a new ZIP in the same directory, choosing a new name if it exists).
 
 The `.zip` archive submenu is registered under `SystemFileAssociations\.zip` so it remains visible even if 7-Zip or another tool is the default application. Input ZIP creation menus use `*\shell` and `Directory\shell`. When right-clicking an existing ZIP you may therefore see both an archive menu and a compression menu in this **static V1**. For a single combined context-aware menu and reliable multi-select, a separately tested Explorer shell handler will be required; do not claim it is supported by this registry-only version.
 
@@ -28,14 +28,15 @@ The `.zip` archive submenu is registered under `SystemFileAssociations\.zip` so 
 - Extraction uses existing `ArchiveService.extractZip`, rename-on-conflict policy, and `SafeExtractTool` limits.
 - ZIP creation calls existing `ArchiveService.createZip` and avoids replacing an existing output file.
 - No prompts for overwriting existing output files from quick actions in this preview.
-- Multi-file selection, native Windows 11 primary context menu integration, right-click background of a folder, and hash submenu are **not** yet part of this slice. In Windows 11, the classic menu may require **Show more options**.
+- SHA-256 output uses the already-existing Community ChecksumTool. It writes a UTF-8 sha256sum-style .sha256 sidecar with CREATE_NEW and chooses a numbered filename rather than overwriting an existing sidecar.
+- Multi-file selection, native Windows 11 primary context menu integration, and right-click background of a folder are **not** yet part of this slice. CRC/MD5/SHA-512 submenus are not implemented. In Windows 11, the classic menu may require **Show more options**.
 - If the portable executable is moved after registration, reinstall the context menu from the new path; removing the menu deletes only UniZip-owned verb keys.
 
 ## Acceptance tests
 
 1. On Windows 10 and 11, keep 7-Zip as default ZIP program; installing UniZip verbs must not change it.
 2. Test a ZIP in folder with Turkish letters, quotes/spaces, nested folders; open, extract-here, extract-to-folder and test.
-3. Right-click normal file and directory; create a ZIP; run again, verify collision gives non-overwriting numbered name.
+3. Right-click normal file and directory; create a ZIP; run again, verify collision gives non-overwriting numbered name. Create SHA-256 on an existing file twice, verifying the original sidecar is preserved.
 4. Confirm user-level uninstall removes menu, without changing file associations or other vendors' verbs.
 5. In a **Pro self-contained Windows ZIP**, menu commands must point to and launch `UniZip Pro.exe` (not Community-only Java launcher).
 6. Verify Windows 11 **Show more options** behavior; native Windows 11 modern context menu remains a separate milestone.
