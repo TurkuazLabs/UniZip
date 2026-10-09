@@ -136,12 +136,17 @@ public final class FileAssociationService {
                 icon, buildCommand("--extract-to-folder", "%1"));
         addSubCommand(script, root, archiveKey, "test", "Arsivi sina",
                 icon, buildCommand("--test", "%1"));
+        addSubCommand(script, root, archiveKey, "hash_sha256", "SHA-256 olustur",
+                icon, buildCommand("--hash-sha256", "%1"));
 
         // Static Windows verbs receive one selected path via %1. Multi-select requires a
         // separate IExplorerCommand implementation; do not claim multi-select support.
         String addCommand = buildCommand("--add-to-archive", "%1");
         addGroupedInputMenu(script, root,
                 "Software\\Classes\\*\\shell\\UniZip.Compress", icon, addCommand);
+        addSubCommand(script, root, "Software\\Classes\\*\\shell\\UniZip.Compress",
+                "hash_sha256", "SHA-256 olustur", icon,
+                buildCommand("--hash-sha256", "%1"));
         addGroupedInputMenu(script, root,
                 "Software\\Classes\\Directory\\shell\\UniZip.Compress", icon, addCommand);
         return script.toString();
