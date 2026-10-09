@@ -104,6 +104,7 @@ public final class FileAssociationService {
         }
         String root = registryRootName(WindowsRegistryTool.ROOT_CURRENT_USER);
         StringBuilder script = new StringBuilder("Windows Registry Editor Version 5.00\r\n\r\n");
+        clearOldContextMenus(script, root);
         for (String key : contextMenuRegistryKeys()) {
             deleteKey(script, root, key);
         }
@@ -111,17 +112,18 @@ public final class FileAssociationService {
     }
 
     public boolean contextMenuInstalledForCurrentUser() {
-        return registryTool.queryValue(
-                WindowsRegistryTool.ROOT_CURRENT_USER,
-                "Software\\Classes\\SystemFileAssociations\\.zip\\shell\\UniZip",
-                "MUIVerb"
-        ).filter("UniZip"::equals).isPresent();
+        return contextMenuRegistryKeys().stream()
+                .allMatch(key -> registryTool.queryValue(
+                        WindowsRegistryTool.ROOT_CURRENT_USER, key, "MUIVerb"
+                ).filter("UniZip"::equals).isPresent());
     }
 
     // Package-private so contract tests can inspect the exact, import-ready registry script.
     String buildContextMenuScript() throws Exception {
         String root = registryRootName(WindowsRegistryTool.ROOT_CURRENT_USER);
         StringBuilder script = new StringBuilder("Windows Registry Editor Version 5.00\r\n\r\n");
+        // Retire UniZip-owned legacy context verbs without altering default app associations.
+        clearOldContextMenus(script, root);
         String icon = buildDefaultIcon();
         String archiveKey = "Software\\Classes\\SystemFileAssociations\\.zip\\shell\\UniZip";
         // Using SystemFileAssociations keeps verbs available if another ZIP program is default.
