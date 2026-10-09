@@ -102,13 +102,18 @@ public final class FileAssociationService {
         if (!registryTool.isWindows()) {
             throw new IllegalStateException("Explorer menu is available only on Windows");
         }
+        registryTool.importRegistryScript(buildContextMenuRemovalScript());
+    }
+
+    // Package-private for side-effect-free registry ownership tests.
+    String buildContextMenuRemovalScript() {
         String root = registryRootName(WindowsRegistryTool.ROOT_CURRENT_USER);
         StringBuilder script = new StringBuilder("Windows Registry Editor Version 5.00\r\n\r\n");
         clearOldContextMenus(script, root);
         for (String key : contextMenuRegistryKeys()) {
             deleteKey(script, root, key);
         }
-        registryTool.importRegistryScript(script.toString());
+        return script.toString();
     }
 
     public boolean contextMenuInstalledForCurrentUser() {
