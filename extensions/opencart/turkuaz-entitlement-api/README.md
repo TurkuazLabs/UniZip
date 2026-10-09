@@ -1,11 +1,11 @@
 # 📄 Dosya Yolu: extensions/opencart/turkuaz-entitlement-api/README.md
 # 📌 Amac: Turkuaz Entitlement API OpenCart 3.x eklentisini aciklamak
 # 📌 Modul - FileType
-# Version: 0.2.0
+# Version: 0.2.1
 # Aciklama: Multi-store UniZip lisans ve Ragnar item satis altyapisinin kurulum notlari
 Bagimli Oldugu Katman: Config | Controller | Service | Repo/Model
 
-# Turkuaz Entitlement API v0.2.0
+# Turkuaz Entitlement API v0.2.1
 
 Bu eklenti OpenCart 3.x icin genel hak/entitlement API saglar.
 
@@ -27,7 +27,7 @@ ragnar.turkuaz.com -> store_id 2 -> project_code RAGNAR
 ## Kurulum
 
 1. OpenCart admin paneline gir.
-2. Extensions > Installer ile `turkuaz_entitlement_api_v0.2.0_oc3.ocmod.zip` yukle.
+2. Extensions > Installer ile `turkuaz_entitlement_api_v0.2.1_oc3.ocmod.zip` yukle.
 3. Extensions > Modifications > Refresh yap.
 4. Extensions > Extensions > Modules > Turkuaz Entitlement API kurulumu yap.
 5. Modul ayarlarindan durumu aktif et.

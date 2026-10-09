@@ -2,7 +2,7 @@
 // 📄 Dosya Yolu: upload/catalog/model/extension/module/turkuaz_entitlement_api.php
 // 📌 Amac: Turkuaz Entitlement API icin siparis, hak, cihaz ve teslimat verilerini yonetmek
 // 📌 Modul - FileType
-// Version: 0.2.0
+// Version: 0.2.1
 // Aciklama: Multi-store ve project_code bazli lisans/item entitlement repository modelidir
 // Bagimli Oldugu Katman: Repo/Model
 class ModelExtensionModuleTurkuazEntitlementApi extends Model {
@@ -84,6 +84,16 @@ class ModelExtensionModuleTurkuazEntitlementApi extends Model {
         return $created->num_rows ? $created->row : false;
     }
 
+    public function isEntitlementActive($entitlement) {
+        if (!$entitlement || !isset($entitlement['entitlement_id'])) {
+            return false;
+        }
+
+        $entitlement_id = (int)$entitlement['entitlement_id'];
+        $query = $this->db->query("SELECT entitlement_id FROM `" . DB_PREFIX . "turkuaz_entitlement` WHERE entitlement_id = '" . $entitlement_id . "' AND status = '1' AND (expires_at IS NULL OR expires_at > NOW()) LIMIT 1");
+        return (bool)$query->num_rows;
+    }
+
     public function activeDeviceCount($entitlement_id) {
         $query = $this->db->query("SELECT COUNT(*) AS total FROM `" . DB_PREFIX . "turkuaz_entitlement_device` WHERE entitlement_id = '" . (int)$entitlement_id . "' AND status = '1'");
         return (int)$query->row['total'];
@@ -109,7 +119,7 @@ class ModelExtensionModuleTurkuazEntitlementApi extends Model {
 
     public function findByToken($token, $device_id, $project_code) {
         $token_hash = $this->hashToken($token);
-        $sql = "SELECT d.*, e.entitlement_type, e.entitlement_code, e.store_id, e.expires_at FROM `" . DB_PREFIX . "turkuaz_entitlement_device` d INNER JOIN `" . DB_PREFIX . "turkuaz_entitlement` e ON (d.entitlement_id = e.entitlement_id) WHERE d.token_hash = '" . $this->db->escape($token_hash) . "' AND d.device_id = '" . $this->db->escape($device_id) . "' AND d.status = '1' AND e.status = '1'";
+        $sql = "SELECT d.*, e.entitlement_type, e.entitlement_code, e.store_id, e.expires_at FROM `" . DB_PREFIX . "turkuaz_entitlement_device` d INNER JOIN `" . DB_PREFIX . "turkuaz_entitlement` e ON (d.entitlement_id = e.entitlement_id) WHERE d.token_hash = '" . $this->db->escape($token_hash) . "' AND d.device_id = '" . $this->db->escape($device_id) . "' AND d.status = '1' AND e.status = '1' AND (e.expires_at IS NULL OR e.expires_at > NOW())";
         if ($project_code !== '') {
             $sql .= " AND d.project_code = '" . $this->db->escape(strtoupper($project_code)) . "'";
         }
@@ -128,13 +138,13 @@ class ModelExtensionModuleTurkuazEntitlementApi extends Model {
     }
 
     public function pendingGameEntitlements($project_code, $customer_id) {
-        $sql = "SELECT * FROM `" . DB_PREFIX . "turkuaz_entitlement` WHERE project_code = '" . $this->db->escape(strtoupper($project_code)) . "' AND customer_id = '" . (int)$customer_id . "' AND entitlement_type IN ('GAME_ITEM', 'GAME_PREMIUM', 'GAME_CURRENCY') AND status = '1' AND delivered_at IS NULL ORDER BY created_at ASC";
+        $sql = "SELECT * FROM `" . DB_PREFIX . "turkuaz_entitlement` WHERE project_code = '" . $this->db->escape(strtoupper($project_code)) . "' AND customer_id = '" . (int)$customer_id . "' AND entitlement_type IN ('GAME_ITEM', 'GAME_PREMIUM', 'GAME_CURRENCY') AND status = '1' AND delivered_at IS NULL AND (expires_at IS NULL OR expires_at > NOW()) ORDER BY created_at ASC";
         $query = $this->db->query($sql);
         return $query->rows;
     }
 
     public function markDelivered($entitlement_id, $project_code, $game_account_id, $character_id) {
-        $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "turkuaz_entitlement` WHERE entitlement_id = '" . (int)$entitlement_id . "' AND project_code = '" . $this->db->escape(strtoupper($project_code)) . "' AND status = '1' LIMIT 1");
+        $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "turkuaz_entitlement` WHERE entitlement_id = '" . (int)$entitlement_id . "' AND project_code = '" . $this->db->escape(strtoupper($project_code)) . "' AND status = '1' AND delivered_at IS NULL AND (expires_at IS NULL OR expires_at > NOW()) LIMIT 1");
         if (!$query->num_rows) {
             return false;
         }

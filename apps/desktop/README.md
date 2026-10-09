@@ -5,7 +5,7 @@
 # Aciklama: Java 21 Maven tabanli ZIP yoneticisi community gelistirme paketi
 Bagimli Oldugu Katman: Controller | Service | Repo/Model | Tool | View | Language | Config
 
-# UniZip Community v0.2.0
+# UniZip Community v0.3.1
 
 ## Bu Surumde
 
@@ -38,9 +38,9 @@ Gercek manifest olusturma:
 
 ```bash
 python scripts/generate-update-manifest.py \
-  --file dist/UniZip_v0.1.61_portable.zip \
-  --version 0.1.61 \
-  --download-url https://unizip.turkuaz.com/releases/stable/UniZip_v0.1.61_portable.zip \
+  --file dist/UniZip_v0.3.1_portable.zip \
+  --version 0.3.1 \
+  --download-url https://unizip.turkuaz.com/releases/stable/UniZip_v0.3.1_portable.zip \
   --output dist/update.yml
 ```
 
@@ -60,7 +60,7 @@ HTTP yalnizca `localhost` testinde kabul edilir. Gercek guncelleme adresi HTTPS 
 
 ## Guvenli Kurulum Siniri
 
-v0.2.0 paketi otomatik kontrol ve guvenli indirme yapar; calisan uygulama dosyalarini kendi uzerine yazmaz. Inno Setup/jpackage tamamlandiginda dogrulanan installer uygulama kapatilarak baslatilacaktir.
+v0.3.1 paketi otomatik kontrol ve guvenli indirme yapar; calisan uygulama dosyalarini kendi uzerine yazmaz. Inno Setup/jpackage tamamlandiginda dogrulanan installer uygulama kapatilarak baslatilacaktir.
 
 ## Calistirma
 

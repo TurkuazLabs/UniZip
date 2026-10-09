@@ -1,11 +1,17 @@
 # 📄 Dosya Yolu: CHANGELOG.md
 # 📌 Amac: UniZip monorepo seviyesindeki yapisal degisiklikleri kaydetmek
 # 📌 Modul - FileType
-# Version: 0.3.0
+# Version: 0.3.1
 # Aciklama: Desktop public runtime bootstrap ve monorepo yapisal degisikliklerini kaydeder
 Bagimli Oldugu Katman: Config | Tool
 
 # Changelog
+
+## 0.3.1-security-release
+
+- OpenCart 3.x customer login dogrulandi ve entitlement expiry kontrolu eklendi.
+- ZIP extraction guvenlik ve kaynak limitleri icin regresyon testleri hazirlandi.
+- Portable release LICENSE dosyasi yolu duzeltildi.
 
 ## 0.3.0-desktop-runtime-bootstrap
 

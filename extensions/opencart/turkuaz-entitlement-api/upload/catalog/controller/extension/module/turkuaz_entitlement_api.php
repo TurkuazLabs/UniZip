@@ -2,7 +2,7 @@
 // 📄 Dosya Yolu: upload/catalog/controller/extension/module/turkuaz_entitlement_api.php
 // 📌 Amac: Turkuaz Entitlement API JSON endpointlerini saglamak
 // 📌 Modul - FileType
-// Version: 0.2.0
+// Version: 0.2.1
 // Aciklama: UniZip lisans girisi, token dogrulama ve Ragnar benzeri oyun hak teslim endpointleri
 // Bagimli Oldugu Katman: Controller
 class ControllerExtensionModuleTurkuazEntitlementApi extends Controller {
@@ -27,7 +27,7 @@ class ControllerExtensionModuleTurkuazEntitlementApi extends Controller {
             return $this->json(array('success' => false, 'code' => 'missing_input', 'message' => 'Email, password and device_id are required.'));
         }
 
-        if (!$this->model_account_customer->login($email, $password)) {
+        if (!$this->customer->login($email, $password)) {
             return $this->json(array('success' => false, 'code' => 'invalid_login', 'message' => 'Email or password is invalid.'));
         }
 
@@ -60,6 +60,10 @@ class ControllerExtensionModuleTurkuazEntitlementApi extends Controller {
 
         if (!$entitlement) {
             return $this->json(array('success' => false, 'code' => 'entitlement_create_failed', 'message' => 'Entitlement could not be created.'));
+        }
+
+        if (!$this->model_extension_module_turkuaz_entitlement_api->isEntitlementActive($entitlement)) {
+            return $this->json(array('success' => false, 'code' => 'entitlement_inactive', 'message' => 'Entitlement expired or inactive.'));
         }
 
         if ($entitlement['entitlement_type'] === 'SOFTWARE_LICENSE') {
