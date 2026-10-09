@@ -21,6 +21,7 @@ import com.unizip.desktop.services.ArchiveService;
 import com.unizip.desktop.services.DesktopRuntimeServices;
 import com.unizip.desktop.services.FeatureGateService;
 import com.unizip.desktop.services.FileAssociationService;
+import com.unizip.desktop.services.ExplorerShellCommandService;
 import com.unizip.desktop.services.LanguageService;
 import com.unizip.desktop.services.LogService;
 import com.unizip.desktop.services.LicenseGuardService;
@@ -45,14 +46,16 @@ import com.unizip.desktop.tools.WindowsRegistryTool;
 import com.unizip.desktop.views.MainFrame;
 
 import com.unizip.desktop.models.ArchiveOperationResult;
-import com.unizip.desktop.models.ExtractOverwriteMode;
 
 import javax.swing.JOptionPane;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.SwingWorker;
 import javax.swing.SwingUtilities;
-import java.nio.file.Files;
+import java.awt.BorderLayout;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Locale;
 
 public final class MainApp {
     private MainApp() {
@@ -139,76 +142,61 @@ public final class MainApp {
         archiveController.openRecentArchive(Path.of(args[0]));
     }
 
-    private static boolean handleShellCommand(String[] args, ArchiveService archiveService, ChecksumTool checksumTool) {
-        if (args == null || args.length < 2 || args[0] == null || !args[0].startsWith("--")) {
+    /**
+     * The Explorer helper process keeps Swing responsive for large ZIPs.
+     * The progress dialog is informational; closing it does not cancel a write.
+     * Cancellation is not advertised until the archive core supports it safely.
+     */
+    private static boolean handleShellCommand(
+            String[] args, ArchiveService archiveService, ChecksumTool checksumTool) {
+        if (args == null || args.length == 0
+                || !ExplorerShellCommandService.supports(args[0])) {
             return false;
         }
-        try {
-            String command = args[0].trim().toLowerCase(Locale.ROOT);
-            Path inputPath = Path.of(args[1]).toAbsolutePath().normalize();
-            ArchiveOperationResult result = switch (command) {
-                case "--extract-here" -> archiveService.extractZip(
-                        inputPath,
-                        shellOutputDirectory(inputPath),
-                        false,
-                        List.of(),
-                        ExtractOverwriteMode.RENAME
-                );
-                case "--extract-to-folder" -> archiveService.extractZip(
-                        inputPath,
-                        shellOutputDirectory(inputPath),
-                        true,
-                        List.of(),
-                        ExtractOverwriteMode.RENAME
-                );
-                case "--test" -> archiveService.testZip(inputPath);
-                case "--hash-sha256" -> new ArchiveOperationResult(
-                        true, "SHA-256 dosyasi olusturuldu: "
-                        + checksumTool.writeSha256Sidecar(inputPath), 1);
-                case "--add-to-archive" -> archiveService.createZip(inputPath, uniqueArchivePath(inputPath));
-                default -> null;
-            };
-            if (result == null) {
-                return false;
+        JDialog progressDialog = new JDialog((java.awt.Frame) null, "UniZip", false);
+        progressDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        JPanel content = new JPanel(new BorderLayout(12, 12));
+        content.setBorder(javax.swing.BorderFactory.createEmptyBorder(16, 16, 16, 16));
+        content.add(new JLabel("UniZip islemi suruyor. Pencereyi kapatmak islemi iptal etmez."),
+                BorderLayout.NORTH);
+        JProgressBar progressBar = new JProgressBar();
+        progressBar.setIndeterminate(true);
+        content.add(progressBar, BorderLayout.CENTER);
+        progressDialog.setContentPane(content);
+        progressDialog.pack();
+        progressDialog.setLocationRelativeTo(null);
+
+        SwingWorker<ArchiveOperationResult, Void> worker = new SwingWorker<>() {
+            @Override
+            protected ArchiveOperationResult doInBackground() throws Exception {
+                return new ExplorerShellCommandService(archiveService, checksumTool).execute(args);
             }
-            JOptionPane.showMessageDialog(null, result.message(), "UniZip", JOptionPane.INFORMATION_MESSAGE);
-            return true;
-        } catch (Exception exception) {
-            JOptionPane.showMessageDialog(null, exception.getMessage(), "UniZip", JOptionPane.ERROR_MESSAGE);
-            return true;
-        }
-    }
 
-    private static Path shellOutputDirectory(Path archivePath) {
-        Path parent = archivePath == null ? null : archivePath.getParent();
-        return parent == null ? Path.of(System.getProperty("user.dir", ".")) : parent;
-    }
-
-    private static Path uniqueArchivePath(Path inputPath) throws Exception {
-        Path parent = inputPath.getParent();
-        if (parent == null) {
-            parent = Path.of(System.getProperty("user.dir", "."));
-        }
-        String fileName = inputPath.getFileName() == null ? "archive" : inputPath.getFileName().toString();
-        String baseName = stripExtension(fileName);
-        Path candidate = parent.resolve(baseName + ".zip");
-        int index = 2;
-        while (Files.exists(candidate)) {
-            candidate = parent.resolve(baseName + " (" + index + ").zip");
-            index++;
-        }
-        return candidate;
-    }
-
-    private static String stripExtension(String name) {
-        if (name == null || name.isBlank()) {
-            return "archive";
-        }
-        int dotIndex = name.lastIndexOf('.');
-        if (dotIndex <= 0) {
-            return name;
-        }
-        return name.substring(0, dotIndex);
+            @Override
+            protected void done() {
+                progressDialog.dispose();
+                try {
+                    ArchiveOperationResult result = get();
+                    JOptionPane.showMessageDialog(null, result.message(), "UniZip",
+                            result.success()
+                                    ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    JOptionPane.showMessageDialog(null,
+                            "UniZip islemi beklenirken kesintiye ugradi", "UniZip",
+                            JOptionPane.ERROR_MESSAGE);
+                } catch (java.util.concurrent.ExecutionException exception) {
+                    Throwable cause = exception.getCause() == null
+                            ? exception : exception.getCause();
+                    JOptionPane.showMessageDialog(null,
+                            cause.getMessage() == null ? cause.toString() : cause.getMessage(),
+                            "UniZip", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        worker.execute();
+        progressDialog.setVisible(true);
+        return true;
     }
 
 }
