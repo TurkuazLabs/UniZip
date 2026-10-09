@@ -32,6 +32,14 @@ The `.zip` archive submenu is registered under `SystemFileAssociations\.zip` so 
 - Multi-file selection, native Windows 11 primary context menu integration, and right-click background of a folder are **not** yet part of this slice. CRC/MD5/SHA-512 submenus are not implemented. In Windows 11, the classic menu may require **Show more options**.
 - If the portable executable is moved after registration, reinstall the context menu from the new path; removing the menu deletes only UniZip-owned verb keys.
 
+## V1.1 protection and repair
+
+- Every static verb, including its parent submenu, registers `MultiSelectModel=Single` so Windows does not start multiple destructive jobs for a multi-file selection. True multi-select belongs in Explorer V2 (issue #8).
+- The **Install / Repair** button stays available after installation; use it when moving the portable folder to refresh the EXE command path. Remove is offered only when all owned menu entries are present.
+- Quick ZIP creation stages the entire ZIP as a temporary file before final destination publish and does not request destination replacement. Existing archives are not intentionally overwritten; ZIP output inside its own source directory is rejected.
+- Creating ZIP from a source directory containing symbolic links now fails closed and removes the staged output instead of including external linked content.
+- Windows CI runs JUnit tests for existing-file preservation, Unicode/space file names, staging cleanup, invalid output location, and symbolic links.
+
 ## Acceptance tests
 
 1. On Windows 10 and 11, keep 7-Zip as default ZIP program; installing UniZip verbs must not change it.
