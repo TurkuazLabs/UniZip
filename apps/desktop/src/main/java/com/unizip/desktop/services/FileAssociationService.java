@@ -135,6 +135,7 @@ public final class FileAssociationService {
         addString(script, root, archiveKey, "MUIVerb", "UniZip");
         addString(script, root, archiveKey, "Icon", icon);
         addString(script, root, archiveKey, "SubCommands", "");
+        addString(script, root, archiveKey, "MultiSelectModel", "Single");
         addSubCommand(script, root, archiveKey, "open", "UniZip ile ac",
                 icon, buildOpenCommand());
         addSubCommand(script, root, archiveKey, "extract_here", "Buraya cikar",
@@ -261,6 +262,7 @@ public final class FileAssociationService {
         addString(script, rootName, menuKey, "MUIVerb", "UniZip");
         addString(script, rootName, menuKey, "Icon", defaultIcon);
         addString(script, rootName, menuKey, "SubCommands", "");
+        addString(script, rootName, menuKey, "MultiSelectModel", "Single");
         addSubCommand(script, rootName, menuKey, "add_to_archive", "Arsive ekle", defaultIcon, addCommand);
     }
 
@@ -271,6 +273,9 @@ public final class FileAssociationService {
     private void addShellCommand(StringBuilder script, String rootName, String key, String label, String icon, String command) {
         addDefault(script, rootName, key, label);
         addString(script, rootName, key, "Icon", icon);
+        // A static Explorer verb gets exactly one %1; do not fan out destructive
+        // operations for multi-selection until an explicit multi-file adapter exists.
+        addString(script, rootName, key, "MultiSelectModel", "Single");
         addDefault(script, rootName, key + "\\command", command);
     }
 
