@@ -38,6 +38,7 @@ import javax.swing.JTextField;
 import javax.swing.JTable;
 import javax.swing.Icon;
 import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -141,7 +142,60 @@ public final class SettingsDialog extends JDialog {
         addFullWidthRow(panel, 3, showSystemMenuCheckBox);
         addFullWidthRow(panel, 4, useLargeMemoryPagesCheckBox);
         addFullWidthRow(panel, 5, mutedLabel(languageService.text("settings.context_menu_note")));
+        JPanel explorerButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, themeService.spacing("sm"), 0));
+        explorerButtons.setOpaque(false);
+        JButton installButton = new JButton(languageService.text("button.explorer_menu_install"));
+        JButton removeButton = new JButton(languageService.text("button.explorer_menu_remove"));
+        installButton.setEnabled(settingsService.fileAssociationSupported());
+        removeButton.setEnabled(settingsService.fileAssociationSupported());
+        installButton.addActionListener(event -> updateExplorerMenu(true, installButton, removeButton));
+        removeButton.addActionListener(event -> updateExplorerMenu(false, installButton, removeButton));
+        explorerButtons.add(installButton);
+        explorerButtons.add(removeButton);
+        addFullWidthRow(panel, 6, explorerButtons);
+        addFullWidthRow(panel, 7, mutedLabel(languageService.text("settings.explorer_menu_info")));
         return panel;
+    }
+
+    private void updateExplorerMenu(boolean install, JButton installButton, JButton removeButton) {
+        installButton.setEnabled(false);
+        removeButton.setEnabled(false);
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                if (install) {
+                    settingsService.installExplorerContextMenu();
+                } else {
+                    settingsService.removeExplorerContextMenu();
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    JOptionPane.showMessageDialog(
+                            SettingsDialog.this,
+                            languageService.text(install
+                                    ? "message.explorer_menu_installed"
+                                    : "message.explorer_menu_removed"),
+                            languageService.text("dialog.settings_title"),
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                } catch (Exception exception) {
+                    JOptionPane.showMessageDialog(
+                            SettingsDialog.this,
+                            languageService.text("error.association_failed") + ": " + exception.getMessage(),
+                            languageService.text("dialog.settings_title"),
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                } finally {
+                    installButton.setEnabled(true);
+                    removeButton.setEnabled(true);
+                }
+            }
+        }.execute();
     }
 
     private JPanel buildUniZipTab() {
