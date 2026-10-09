@@ -148,7 +148,8 @@ public final class SettingsDialog extends JDialog {
         JButton removeButton = new JButton(languageService.text("button.explorer_menu_remove"));
         boolean supported = settingsService.fileAssociationSupported();
         boolean installed = supported && settingsService.explorerContextMenuInstalled();
-        installButton.setEnabled(supported && !installed);
+        // Installing again is also a repair operation for moved portable builds.
+        installButton.setEnabled(supported);
         removeButton.setEnabled(installed);
         installButton.addActionListener(event -> updateExplorerMenu(true, installButton, removeButton));
         removeButton.addActionListener(event -> updateExplorerMenu(false, installButton, removeButton));
@@ -195,7 +196,7 @@ public final class SettingsDialog extends JDialog {
                 } finally {
                     boolean supported = settingsService.fileAssociationSupported();
                     boolean installed = supported && settingsService.explorerContextMenuInstalled();
-                    installButton.setEnabled(supported && !installed);
+                    installButton.setEnabled(supported);
                     removeButton.setEnabled(installed);
                 }
             }
