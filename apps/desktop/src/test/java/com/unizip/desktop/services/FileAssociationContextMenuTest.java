@@ -69,6 +69,24 @@ class FileAssociationContextMenuTest {
     }
 
     @Test
+    void everyExplorerVerbExplicitlyRefusesMultipleSelections() throws Exception {
+        String script = service.buildContextMenuScript();
+        assertTrue(script.contains("\"MultiSelectModel\"=\"Single\""));
+        String[] sections = script.split("(?=\\[HKEY_CURRENT_USER\\\\)");
+        int commands = 0;
+        for (String section : sections) {
+            if (section.contains("]") && section.contains("command]")) {
+                continue;
+            }
+            if (section.contains("MultiSelectModel") && section.contains("UniZip")) {
+                assertTrue(section.contains("Single"), "Every UniZip verb must be single selection");
+                commands++;
+            }
+        }
+        assertTrue(commands >= 7, "Expected both root menus and all subcommands");
+    }
+
+    @Test
     void packagedProLauncherIsPreservedInsteadOfStartingCommunityMainApp() throws Exception {
         String original = System.getProperty("jpackage.app-path");
         Path launcher = Files.createTempFile("UniZip Pro launcher ", ".exe");
