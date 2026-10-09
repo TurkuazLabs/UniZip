@@ -789,8 +789,17 @@ public final class JavaZipTool {
     private int addDirectory(ZipOutputStream zipOutputStream, Path sourceDirectory, Path zipRoot) throws IOException {
         int[] count = {0};
         try (var stream = Files.walk(sourceDirectory)) {
-            stream.filter(Files::isRegularFile).forEach(path -> {
+            stream.forEach(path -> {
                 try {
+                    if (Files.isSymbolicLink(path)) {
+                        throw new IOException("ZIP kaynaginda sembolik baglanti desteklenmiyor: " + path);
+                    }
+                    if (Files.isDirectory(path)) {
+                        return;
+                    }
+                    if (!Files.isRegularFile(path)) {
+                        throw new IOException("ZIP kaynaginda desteklenmeyen dosya tipi: " + path);
+                    }
                     Path relative = sourceDirectory.relativize(path);
                     Path entryName = zipRoot.resolve(relative);
                     addFile(zipOutputStream, path, entryName);
