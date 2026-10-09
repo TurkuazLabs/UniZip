@@ -23,7 +23,7 @@ import java.util.Set;
 public final class ExplorerShellCommandService {
     private static final Set<String> COMMANDS = Set.of(
             "--extract-here", "--extract-to-folder", "--test",
-            "--hash-sha256", "--add-to-archive");
+            "--hash-sha256", "--hash-sha512", "--hash-crc32", "--add-to-archive");
     private final ArchiveService archiveService;
     private final ChecksumTool checksumTool;
 
@@ -57,6 +57,12 @@ public final class ExplorerShellCommandService {
             case "--hash-sha256" -> new ArchiveOperationResult(
                     true, "SHA-256 dosyasi olusturuldu: "
                     + checksumTool.writeSha256Sidecar(inputPath), 1);
+            case "--hash-sha512" -> new ArchiveOperationResult(
+                    true, "SHA-512 dosyasi olusturuldu: "
+                    + checksumTool.writeSha512Sidecar(inputPath), 1);
+            case "--hash-crc32" -> new ArchiveOperationResult(
+                    true, "CRC-32 dosyasi olusturuldu: "
+                    + checksumTool.writeCrc32Sidecar(inputPath), 1);
             case "--add-to-archive" -> archiveService.createZip(
                     inputPath, uniqueArchivePath(inputPath));
             default -> throw new IllegalArgumentException("Desteklenmeyen Explorer islemi");

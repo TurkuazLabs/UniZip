@@ -42,6 +42,38 @@ class ChecksumSidecarTest {
     }
 
     @Test
+    void sha512AndCrc32ProduceKnownHashesAndNeverOverwrite() throws Exception {
+        Path input = temp.resolve("Türkçe file.bin");
+        Files.writeString(input, "abc", StandardCharsets.UTF_8);
+        ChecksumTool tool = new ChecksumTool();
+
+        Path sha = tool.writeSha512Sidecar(input);
+        Path crc = tool.writeCrc32Sidecar(input);
+        String expectedSha = "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a"
+                + "2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f";
+        assertEquals(expectedSha + "  Türkçe file.bin", Files.readString(sha).trim());
+        assertEquals("352441c2  Türkçe file.bin", Files.readString(crc).trim());
+
+        Path second = tool.writeSha512Sidecar(input);
+        assertEquals("Türkçe file.bin (2).sha512", second.getFileName().toString());
+        assertEquals(expectedSha + "  Türkçe file.bin", Files.readString(sha).trim());
+        assertEquals(expectedSha + "  Türkçe file.bin", Files.readString(second).trim());
+    }
+
+    @Test
+    void hashRejectsSymlinkEvenWhenItPointsToRegularFile() throws Exception {
+        Path input = temp.resolve("real.txt");
+        Files.writeString(input, "abc");
+        Path link = temp.resolve("link.txt");
+        try {
+            Files.createSymbolicLink(link, input);
+        } catch (java.io.IOException | UnsupportedOperationException | SecurityException error) {
+            org.junit.jupiter.api.Assumptions.assumeTrue(false, "No symlink permission on test host");
+        }
+        assertThrows(java.io.IOException.class, () -> new ChecksumTool().writeSha512Sidecar(link));
+    }
+
+    @Test
     void rejectsDirectoriesAndMissingFiles() throws Exception {
         ChecksumTool tool = new ChecksumTool();
         assertThrows(java.io.IOException.class, () -> tool.writeSha256Sidecar(temp));

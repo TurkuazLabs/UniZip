@@ -146,6 +146,10 @@ public final class FileAssociationService {
                 icon, buildCommand("--test", "%1"));
         addSubCommand(script, root, archiveKey, "hash_sha256", "SHA-256 olustur",
                 icon, buildCommand("--hash-sha256", "%1"));
+        addSubCommand(script, root, archiveKey, "hash_sha512", "SHA-512 olustur",
+                icon, buildCommand("--hash-sha512", "%1"));
+        addSubCommand(script, root, archiveKey, "hash_crc32", "CRC-32 olustur",
+                icon, buildCommand("--hash-crc32", "%1"));
 
         // Static Windows verbs receive one selected path via %1. Multi-select requires a
         // separate IExplorerCommand implementation; do not claim multi-select support.
@@ -155,6 +159,12 @@ public final class FileAssociationService {
         addSubCommand(script, root, "Software\\Classes\\*\\shell\\UniZip.Compress",
                 "hash_sha256", "SHA-256 olustur", icon,
                 buildCommand("--hash-sha256", "%1"));
+        addSubCommand(script, root, "Software\\Classes\\*\\shell\\UniZip.Compress",
+                "hash_sha512", "SHA-512 olustur", icon,
+                buildCommand("--hash-sha512", "%1"));
+        addSubCommand(script, root, "Software\\Classes\\*\\shell\\UniZip.Compress",
+                "hash_crc32", "CRC-32 olustur", icon,
+                buildCommand("--hash-crc32", "%1"));
         addGroupedInputMenu(script, root,
                 "Software\\Classes\\Directory\\shell\\UniZip.Compress", icon, addCommand);
         return script.toString();

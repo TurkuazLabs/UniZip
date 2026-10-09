@@ -11,8 +11,8 @@ The shell integration stays in Community `FileAssociationService` and reuses the
 In the UniZip desktop app, open **Settings > System** and choose **Install Explorer context menu** or **Remove Explorer context menu**. These actions modify only `HKCU\Software\Classes` for the current Windows user; they do not set `.zip` default ProgID, delete Explorer UserChoice, or require Administrator privilege.
 
 Menu verbs:
-- Right-click `.zip`: UniZip > Open, Extract here, Extract into folder, Test archive, Generate SHA-256 sidecar.
-- Right-click file: UniZip > Add to ZIP or Generate SHA-256 sidecar. Right-click directory: UniZip > Add to ZIP (generates a new ZIP in the same directory, choosing a new name if it exists).
+- Right-click `.zip`: UniZip > Open, Extract here, Extract into folder, Test archive, Generate SHA-256, SHA-512 or CRC-32 sidecar.
+- Right-click file: UniZip > Add to ZIP or Generate SHA-256/SHA-512/CRC-32 sidecar. Right-click directory: UniZip > Add to ZIP (generates a new ZIP in the same directory, choosing a new name if it exists).
 
 The `.zip` archive submenu is registered under `SystemFileAssociations\.zip` so it remains visible even if 7-Zip or another tool is the default application. Input ZIP creation menus use `*\shell` and `Directory\shell`. When right-clicking an existing ZIP you may therefore see both an archive menu and a compression menu in this **static V1**. For a single combined context-aware menu and reliable multi-select, a separately tested Explorer shell handler will be required; do not claim it is supported by this registry-only version.
 
@@ -28,8 +28,8 @@ The `.zip` archive submenu is registered under `SystemFileAssociations\.zip` so 
 - Extraction uses existing `ArchiveService.extractZip`, rename-on-conflict policy, and `SafeExtractTool` limits.
 - ZIP creation calls existing `ArchiveService.createZip` and avoids replacing an existing output file.
 - No prompts for overwriting existing output files from quick actions in this preview.
-- SHA-256 output uses the already-existing Community ChecksumTool. It writes a UTF-8 sha256sum-style .sha256 sidecar with CREATE_NEW and chooses a numbered filename rather than overwriting an existing sidecar.
-- Multi-file selection, native Windows 11 primary context menu integration, and right-click background of a folder are **not** yet part of this slice. CRC/MD5/SHA-512 submenus are not implemented. In Windows 11, the classic menu may require **Show more options**.
+- Hash output uses the shared Community ChecksumTool (SHA-256, SHA-512, CRC-32). It writes a UTF-8 sha256sum-style .sha256 sidecar with CREATE_NEW and chooses a numbered filename rather than overwriting an existing sidecar.
+- Multi-file selection, native Windows 11 primary context menu integration, and right-click background of a folder are **not** yet part of this slice. MD5 and checksum verification are not implemented. CRC-32 is an accidental-corruption check, not a secure authenticity proof. In Windows 11, the classic menu may require **Show more options**.
 - If the portable executable is moved after registration, reinstall the context menu from the new path; removing the menu deletes only UniZip-owned verb keys.
 
 ## V1.1 protection and repair
@@ -47,6 +47,15 @@ The `.zip` archive submenu is registered under `SystemFileAssociations\.zip` so 
 - The progress window is **not** a cancellation control. It stays open until completion because abruptly cancelling a ZIP write without core rollback/cancellation semantics is unsafe. A later release can add explicit safe cancel with staging/cleanup tests.
 - CLI accepts only the documented five shell commands and exactly one file path; unsupported verbs are not silently treated as successful operations.
 - ZIP output naming retains dots in directory names and chooses numbered non-overwriting names for collisions.
+
+## Explorer V2 hash groundwork
+
+The classic one-selection Explorer menu now supports SHA-512 and CRC-32 alongside SHA-256.
+Each action creates a non-overwriting sidecar and delegates to the same shared ChecksumTool in Community.
+Hash results use the file bytes; CRC-32 is not a cryptographic signature. The modern Windows 11 menu
+still requires a signed native IExplorerCommand implementation plus package identity/sparse package;
+the static registry menu does **not** claim to implement it. Multiple selection and safe cancellation
+remain separate gated changes.
 
 ## Acceptance tests
 

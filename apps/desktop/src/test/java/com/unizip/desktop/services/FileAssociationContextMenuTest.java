@@ -61,6 +61,8 @@ class FileAssociationContextMenuTest {
         assertTrue(script.contains("--extract-to-folder"));
         assertTrue(script.contains("--test"));
         assertTrue(script.contains("--hash-sha256"));
+        assertTrue(script.contains("--hash-sha512"));
+        assertTrue(script.contains("--hash-crc32"));
         assertTrue(script.contains("--add-to-archive"));
         assertTrue(script.contains("\"MUIVerb\"=\"UniZip\""));
         assertFalse(script.contains("--encrypt"));

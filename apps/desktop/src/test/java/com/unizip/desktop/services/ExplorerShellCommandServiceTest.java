@@ -23,7 +23,8 @@ final class ExplorerShellCommandServiceTest {
     void acceptsOnlyImplementedExplorerVerbs() {
         for (String verb : new String[] {
                 "--extract-here", "--extract-to-folder", "--test",
-                "--hash-sha256", "--add-to-archive"}) {
+                "--hash-sha256", "--hash-sha512", "--hash-crc32",
+                "--add-to-archive"}) {
             assertTrue(ExplorerShellCommandService.supports(verb), verb);
         }
         assertFalse(ExplorerShellCommandService.supports("--erase"));
