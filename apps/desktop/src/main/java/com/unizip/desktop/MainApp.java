@@ -114,7 +114,7 @@ public final class MainApp {
         FileSystemTool fileSystemTool = new FileSystemTool();
         ExternalEditorTool externalEditorTool = new ExternalEditorTool();
         ArchiveService archiveService = new ArchiveService(javaZipTool, fileSystemTool, logService, checksumTool, externalEditorTool, settingsService);
-        if (handleShellCommand(args, archiveService)) {
+        if (handleShellCommand(args, archiveService, checksumTool)) {
             return;
         }
         UserDirectoryTool userDirectoryTool = new UserDirectoryTool();
@@ -139,7 +139,7 @@ public final class MainApp {
         archiveController.openRecentArchive(Path.of(args[0]));
     }
 
-    private static boolean handleShellCommand(String[] args, ArchiveService archiveService) {
+    private static boolean handleShellCommand(String[] args, ArchiveService archiveService, ChecksumTool checksumTool) {
         if (args == null || args.length < 2 || args[0] == null || !args[0].startsWith("--")) {
             return false;
         }
@@ -162,6 +162,9 @@ public final class MainApp {
                         ExtractOverwriteMode.RENAME
                 );
                 case "--test" -> archiveService.testZip(inputPath);
+                case "--hash-sha256" -> new ArchiveOperationResult(
+                        true, "SHA-256 dosyasi olusturuldu: "
+                        + checksumTool.writeSha256Sidecar(inputPath), 1);
                 case "--add-to-archive" -> archiveService.createZip(inputPath, uniqueArchivePath(inputPath));
                 default -> null;
             };
