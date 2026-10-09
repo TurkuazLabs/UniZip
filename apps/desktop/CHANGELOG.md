@@ -1,9 +1,14 @@
 # 📄 Dosya Yolu: apps/desktop/CHANGELOG.md
 # 📌 Amac: UniZip Community surum degisikliklerini listelemek
 # 📌 Modul - FileType
-# Version: 0.3.0
+# Version: 0.3.1
 # Aciklama: Public runtime bootstrap, lisans guard, feature gate, otomatik guncelleme ve release CI degisiklikleri
 Bagimli Oldugu Katman: Controller | Service | Repo/Model | Tool | View | Language | Config
+
+## v0.3.1
+
+- ZIP extraction symlink ve unzip budget dogrulamasi eklendi.
+- Cikarma sirasinda gecici dosyaya yazip basariliysa hedefe tasima uygulandi.
 
 ## v0.3.0
 

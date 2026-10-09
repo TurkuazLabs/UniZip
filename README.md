@@ -1,7 +1,7 @@
 # 📄 Dosya Yolu: README.md
 # 📌 Amac: UniZip Community monorepo yapisini, edition sinirlarini ve gelistirme komutlarini aciklamak
 # 📌 Modul - FileType
-# Version: 0.3.0
+# Version: 0.3.1
 # Aciklama: Desktop public runtime bootstrap, OpenCart entegrasyonu, Community lisansi ve Pro ayrimini tanimlar
 Bagimli Oldugu Katman: Controller | Service | Repo/Model | Tool | View | Language | Config
 
@@ -111,5 +111,5 @@ scripts/configure-dual-remotes.sh
 
 ## Surumler
 
-- UniZip Desktop: `0.3.0`
+- UniZip Desktop: `0.3.1`
 - Turkuaz Entitlement API: `0.2.0`

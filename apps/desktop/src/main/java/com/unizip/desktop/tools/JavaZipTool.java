@@ -2,13 +2,14 @@
 # 📄 Dosya Yolu: apps/desktop/src/main/java/com/unizip/desktop/tools/JavaZipTool.java
 # 📌 Amac: Java built-in ZIP motoru ile ZIP listeleme, cikarma ve olusturma yapmak
 # 📌 Modul - FileType
-# Version: 0.1.57
-# Aciklama: java.util.zip tabanli Community ZIP araci, detayli test raporu ve entry islemleri araci
+# Version: 0.3.1
+# Aciklama: ZIP extraction output staging, symlink rejection ve bounded archive extraction
 
 Bagimli Oldugu Katman: Tool
 */
 package com.unizip.desktop.tools;
 
+import com.unizip.desktop.config.ArchiveExtractionLimits;
 import com.unizip.desktop.models.ArchiveEntryModel;
 import com.unizip.desktop.models.ArchiveTestResultModel;
 import com.unizip.desktop.models.ExtractOverwriteMode;
@@ -32,9 +33,15 @@ import java.util.zip.ZipOutputStream;
 
 public final class JavaZipTool {
     private final SafeExtractTool safeExtractTool;
+    private final ArchiveExtractionLimits extractionLimits;
 
     public JavaZipTool(SafeExtractTool safeExtractTool) {
-        this.safeExtractTool = safeExtractTool;
+        this(safeExtractTool, ArchiveExtractionLimits.defaults());
+    }
+
+    public JavaZipTool(SafeExtractTool safeExtractTool, ArchiveExtractionLimits extractionLimits) {
+        this.safeExtractTool = java.util.Objects.requireNonNull(safeExtractTool, "safeExtractTool");
+        this.extractionLimits = java.util.Objects.requireNonNull(extractionLimits, "extractionLimits");
     }
 
     public List<ArchiveEntryModel> listEntries(Path zipFile) throws IOException {
@@ -142,9 +149,11 @@ public final class JavaZipTool {
         Set<String> selectedNames = normalizedSelection(selectedEntryNames);
         ExtractOverwriteMode mode = overwriteMode == null ? ExtractOverwriteMode.OVERWRITE : overwriteMode;
         int count = 0;
+        ExtractionBudget budget = new ExtractionBudget(extractionLimits);
         try (ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
+                budget.onEntry();
                 String entryName = normalizeEntryName(entry.getName());
                 if (!selectedNames.isEmpty() && !shouldDeleteEntry(entryName, selectedNames)) {
                     zipInputStream.closeEntry();
@@ -164,9 +173,7 @@ public final class JavaZipTool {
                     if (parent != null) {
                         Files.createDirectories(parent);
                     }
-                    try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(finalTargetPath))) {
-                        zipInputStream.transferTo(outputStream);
-                    }
+                    writeExtractedEntry(zipInputStream, finalTargetPath, budget);
                     count++;
                 }
                 zipInputStream.closeEntry();
@@ -443,9 +450,11 @@ public final class JavaZipTool {
         }
 
         int exportedCount = 0;
+        ExtractionBudget budget = new ExtractionBudget(extractionLimits);
         try (ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
+                budget.onEntry();
                 String entryName = normalizeEntryName(entry.getName());
                 if (!shouldDeleteEntry(entryName, normalizedExportNames)) {
                     zipInputStream.closeEntry();
@@ -460,9 +469,7 @@ public final class JavaZipTool {
                     if (parent != null) {
                         Files.createDirectories(parent);
                     }
-                    try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(targetPath))) {
-                        zipInputStream.transferTo(outputStream);
-                    }
+                    writeExtractedEntry(zipInputStream, targetPath, budget);
                     exportedCount++;
                 }
                 zipInputStream.closeEntry();
@@ -491,9 +498,9 @@ public final class JavaZipTool {
                 if (parent != null) {
                     Files.createDirectories(parent);
                 }
-                try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(outputFile))) {
-                    zipInputStream.transferTo(outputStream);
-                }
+                ExtractionBudget budget = new ExtractionBudget(extractionLimits);
+                budget.onEntry();
+                writeExtractedEntry(zipInputStream, outputFile, budget);
                 zipInputStream.closeEntry();
                 return;
             }
@@ -771,4 +778,64 @@ public final class JavaZipTool {
         }
         zipOutputStream.closeEntry();
     }
+
+    private void writeExtractedEntry(
+            InputStream inputStream,
+            Path target,
+            ExtractionBudget budget
+    ) throws IOException {
+        Path parent = target.toAbsolutePath().normalize().getParent();
+        if (parent == null) {
+            throw new IOException("Cikarma hedefinin ust klasoru yok");
+        }
+        Files.createDirectories(parent);
+        Path staged = Files.createTempFile(parent, ".unizip-extract-", ".part");
+        try {
+            try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(staged))) {
+                budget.copy(inputStream, outputStream);
+            }
+            if (Files.isSymbolicLink(target)) {
+                throw new IOException("Cikarma hedefi sembolik baglanti: " + target);
+            }
+            Files.move(staged, target, StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            Files.deleteIfExists(staged);
+        }
+    }
+
+    private static final class ExtractionBudget {
+        private final ArchiveExtractionLimits limits;
+        private int entryCount;
+        private long totalBytes;
+
+        private ExtractionBudget(ArchiveExtractionLimits limits) {
+            this.limits = limits;
+        }
+
+        private void onEntry() throws IOException {
+            entryCount++;
+            if (entryCount > limits.maxEntries()) {
+                throw new IOException("ZIP kayit sayisi guvenlik limitini asti");
+            }
+        }
+
+        private void copy(InputStream input, OutputStream output) throws IOException {
+            long entryBytes = 0;
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                if (read == 0) {
+                    continue;
+                }
+                if (entryBytes > limits.maxEntryBytes() - read
+                        || totalBytes > limits.maxTotalBytes() - read) {
+                    throw new IOException("ZIP acilan dosya boyutu guvenlik limitini asti");
+                }
+                entryBytes += read;
+                totalBytes += read;
+                output.write(buffer, 0, read);
+            }
+        }
+    }
+
 }

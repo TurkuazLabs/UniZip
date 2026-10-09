@@ -1,13 +1,15 @@
 # 📄 Dosya Yolu: .github/workflows/release-package.yml
 # 📌 Amac: UniZip tag yayinlarinda Desktop portable paket, update manifest ve OpenCart OCMOD uretmek
 # 📌 Modul - FileType
-# Version: 0.1.61
+# Version: 0.3.1
 # Aciklama: Maven build, ZIP paket, SHA-256 manifest ve OCMOD artifact pipeline tanimi
 # Bagimli Oldugu Katman: Tool | Config
 
 name: UniZip Release Package
 
 on:
+  pull_request:
+    branches: [main]
   workflow_dispatch:
   push:
     tags:
@@ -32,7 +34,12 @@ jobs:
         shell: pwsh
         run: |
           $desktopVersion = (Get-Content version.txt -Raw).Trim()
-          $extensionVersion = (Get-Content extensions/opencart/turkuaz-entitlement-api/version.txt -Raw).Trim()
+          $extensionVersion = Get-Content extensions/opencart/turkuaz-entitlement-api/version.txt |
+            Where-Object { $_.Trim() -match '^[0-9]+\.[0-9]+\.[0-9]+$' } |
+            Select-Object -Last 1
+          if ([string]::IsNullOrWhiteSpace($extensionVersion)) {
+            throw "OpenCart eklenti surumu bulunamadi"
+          }
           "UNIZIP_VERSION=$desktopVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
           "ENTITLEMENT_VERSION=$extensionVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
 
@@ -46,7 +53,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path "$dist/lib" | Out-Null
           Copy-Item "apps/desktop/target/unizip-desktop-${env:UNIZIP_VERSION}.jar" "$dist/UniZip.jar"
           Copy-Item "apps/desktop/target/lib/*" "$dist/lib/"
-          Copy-Item "LICENSE.md" "$dist/LICENSE.md"
+          Copy-Item "LICENSE" "$dist/LICENSE"
           @'
           @echo off
           REM # 📄 Dosya Yolu: UniZip.bat
