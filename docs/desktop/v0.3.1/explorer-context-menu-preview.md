@@ -40,6 +40,14 @@ The `.zip` archive submenu is registered under `SystemFileAssociations\.zip` so 
 - Creating ZIP from a source directory containing symbolic links now fails closed and removes the staged output instead of including external linked content.
 - Windows CI runs JUnit tests for existing-file preservation, Unicode/space file names, staging cleanup, invalid output location, and symbolic links.
 
+## Background Explorer operations
+
+- Explorer quick extract, ZIP creation, testing and SHA-256 run through one `ExplorerShellCommandService`, which delegates to existing Community `ArchiveService`/`ChecksumTool`. No duplicate ZIP or hashing engine was added.
+- A non-modal, indeterminate progress dialog appears while `SwingWorker` performs disk I/O off the Swing event dispatch thread, keeping Windows UI responsive during larger operations.
+- The progress window is **not** a cancellation control. It stays open until completion because abruptly cancelling a ZIP write without core rollback/cancellation semantics is unsafe. A later release can add explicit safe cancel with staging/cleanup tests.
+- CLI accepts only the documented five shell commands and exactly one file path; unsupported verbs are not silently treated as successful operations.
+- ZIP output naming retains dots in directory names and chooses numbered non-overwriting names for collisions.
+
 ## Acceptance tests
 
 1. On Windows 10 and 11, keep 7-Zip as default ZIP program; installing UniZip verbs must not change it.
