@@ -33,6 +33,28 @@ class FileAssociationContextMenuTest {
     }
 
     @Test
+    void installationMigratesOwnedLegacyMenusWithoutChangingUserDefaults() throws Exception {
+        String script = service.buildContextMenuScript();
+        assertTrue(script.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\*\\shell\\UniZip]"));
+        assertTrue(script.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\Directory\\shell\\UniZip]"));
+        assertTrue(script.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\UniZip.Archive\\shell\\UniZip]"));
+        assertFalse(script.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\.zip]"));
+        assertFalse(script.contains("\\UserChoice"));
+        assertFalse(script.contains("[-HKEY_LOCAL_MACHINE"));
+    }
+
+    @Test
+    void uninstallOnlyDeletesUnizipOwnedVerbsAndNeverTouchesAssociations() {
+        String script = service.buildContextMenuRemovalScript();
+        assertTrue(script.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.zip\\shell\\UniZip]"));
+        assertTrue(script.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\*\\shell\\UniZip.Compress]"));
+        assertTrue(script.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\Directory\\shell\\UniZip.Compress]"));
+        assertFalse(script.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\.zip]"));
+        assertFalse(script.contains("\\UserChoice"));
+        assertFalse(script.contains("[-HKEY_LOCAL_MACHINE"));
+    }
+
+    @Test
     void menuOnlyOffersCommandsImplementedByCurrentZipEngine() throws Exception {
         String script = service.buildContextMenuScript();
         assertTrue(script.contains("--extract-here"));
