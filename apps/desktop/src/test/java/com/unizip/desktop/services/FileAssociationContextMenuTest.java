@@ -33,6 +33,32 @@ class FileAssociationContextMenuTest {
     }
 
     @Test
+    void zipSelectionUsesOnlyArchiveMenuAndGenericFilesStillHaveCompression() throws Exception {
+        String script = service.buildContextMenuScript();
+        assertTrue(script.contains(
+                "\"AppliesTo\"=\"NOT System.FileExtension:=.zip\""));
+        assertTrue(script.contains(
+                "Software\\\\Classes\\\\SystemFileAssociations\\\\.zip\\\\shell\\\\UniZip"));
+        assertTrue(script.contains(
+                "Software\\\\Classes\\\\*\\\\shell\\\\UniZip.Compress"));
+    }
+
+    @Test
+    void fileAssociationsCannotReintroduceLegacyMenusOrDeleteNewOnes() throws Exception {
+        String script = service.buildRegistryScript(
+                WindowsRegistryTool.ROOT_CURRENT_USER,
+                java.util.List.of("zip", "7z"),
+                "\"C:\\\\Apps\\\\UniZip Pro.exe\" \"%1\"",
+                "C:\\\\Apps\\\\UniZip Pro.exe,0", true, true);
+        assertFalse(script.contains("shell\\\\UniZip.Compress"));
+        assertFalse(script.contains("shell\\\\UniZip]"));
+        assertFalse(script.contains("\"AppliesTo\""));
+        assertFalse(script.contains("SystemFileAssociations"));
+        assertTrue(script.contains("[-HKEY_CURRENT_USER\\\\Software\\\\Classes\\\\*\\\\shell\\\\UniZip]"));
+        assertTrue(script.contains("HKEY_CURRENT_USER\\\\Software\\\\Classes\\\\.zip"));
+    }
+
+    @Test
     void installationMigratesOwnedLegacyMenusWithoutChangingUserDefaults() throws Exception {
         String script = service.buildContextMenuScript();
         assertTrue(script.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\*\\shell\\UniZip]"));

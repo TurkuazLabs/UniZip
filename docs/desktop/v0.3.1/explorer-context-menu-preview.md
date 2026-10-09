@@ -57,6 +57,19 @@ still requires a signed native IExplorerCommand implementation plus package iden
 the static registry menu does **not** claim to implement it. Multiple selection and safe cancellation
 remain separate gated changes.
 
+## Avoid duplicate UniZip menus
+
+Windows supports a static menu condition through Advanced Query Syntax. The generic
+`*\\shell\\UniZip.Compress` now has `AppliesTo = NOT System.FileExtension:=.zip`:
+a ZIP gets the archive-only UniZip flyout (open/extract/test/hash), while other
+files get create ZIP / checksum actions. Folder compression remains unchanged.
+
+Associating file extensions no longer writes a second legacy UniZip context menu.
+If the user's saved preference enables right-click menus, it installs/repairs the
+same current-user Explorer verbs. The old UniZip-only ProgID/wildcard keys are cleaned
+as part of migration; other vendors' associations are not modified by menu registration.
+Windows 10/11 GUI visibility still needs manual acceptance.
+
 ## Acceptance tests
 
 1. On Windows 10 and 11, keep 7-Zip as default ZIP program; installing UniZip verbs must not change it.

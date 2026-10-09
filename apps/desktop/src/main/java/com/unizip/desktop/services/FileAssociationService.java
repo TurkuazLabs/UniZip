@@ -83,6 +83,12 @@ public final class FileAssociationService {
                 groupContextMenu
         );
         registryTool.importRegistryScript(registryScript);
+        // Archive file associations and context-menu registration are separate.
+        // If enabled in preferences, install only the current user's modern classic
+        // Explorer menu; never recreate the obsolete ProgID / wildcard verb trees.
+        if (contextMenuEnabled) {
+            installContextMenuCurrentUser();
+        }
         if (scope == FileAssociationScope.CURRENT_USER) {
             for (String extension : normalizedExtensions) {
                 clearCurrentUserChoice(extension);
@@ -156,6 +162,11 @@ public final class FileAssociationService {
         String addCommand = buildCommand("--add-to-archive", "%1");
         addGroupedInputMenu(script, root,
                 "Software\\Classes\\*\\shell\\UniZip.Compress", icon, addCommand);
+        // Show the archive-specific menu on .zip rather than a second generic
+        // file menu. Uses Windows Shell's documented fast-property AQS filter.
+        addString(script, root,
+                "Software\\Classes\\*\\shell\\UniZip.Compress",
+                "AppliesTo", "NOT System.FileExtension:=.zip");
         addSubCommand(script, root, "Software\\Classes\\*\\shell\\UniZip.Compress",
                 "hash_sha256", "SHA-256 olustur", icon,
                 buildCommand("--hash-sha256", "%1"));
@@ -178,7 +189,8 @@ public final class FileAssociationService {
         );
     }
 
-    private String buildRegistryScript(
+    // Package-private for isolated association/menu non-duplication regression tests.
+    String buildRegistryScript(
             String root,
             List<String> extensions,
             String openCommand,
@@ -215,11 +227,9 @@ public final class FileAssociationService {
             addOpenWithProgId(script, rootName, "Software\\Classes\\" + dottedExtension + "\\OpenWithProgids", PROG_ID);
         }
 
+        // Remove old UniZip-only context verbs: the new per-user menu is
+        // managed independently and never rewrites an existing file association.
         clearOldContextMenus(script, rootName);
-        if (contextMenuEnabled) {
-            addArchiveContextMenu(script, rootName, defaultIcon, groupContextMenu);
-            addInputContextMenu(script, rootName, defaultIcon, groupContextMenu);
-        }
         return script.toString();
     }
 
@@ -233,39 +243,6 @@ public final class FileAssociationService {
         deleteKey(script, rootName, "Software\\Classes\\*\\shell\\UniZip.AddToArchive");
         deleteKey(script, rootName, "Software\\Classes\\Directory\\shell\\UniZip");
         deleteKey(script, rootName, "Software\\Classes\\Directory\\shell\\UniZip.AddToArchive");
-    }
-
-    private void addArchiveContextMenu(StringBuilder script, String rootName, String defaultIcon, boolean grouped) throws Exception {
-        String openCommand = buildOpenCommand();
-        String extractHereCommand = buildCommand("--extract-here", "%1");
-        String extractToFolderCommand = buildCommand("--extract-to-folder", "%1");
-        String testCommand = buildCommand("--test", "%1");
-        if (grouped) {
-            String menuKey = "Software\\Classes\\" + PROG_ID + "\\shell\\UniZip";
-            addString(script, rootName, menuKey, "MUIVerb", "UniZip");
-            addString(script, rootName, menuKey, "Icon", defaultIcon);
-            addString(script, rootName, menuKey, "SubCommands", "");
-            addSubCommand(script, rootName, menuKey, "open", "UniZip ile ac", defaultIcon, openCommand);
-            addSubCommand(script, rootName, menuKey, "extract_here", "Buraya cikar", defaultIcon, extractHereCommand);
-            addSubCommand(script, rootName, menuKey, "extract_to_folder", "Klasore cikar", defaultIcon, extractToFolderCommand);
-            addSubCommand(script, rootName, menuKey, "test", "Arsivi sina", defaultIcon, testCommand);
-            return;
-        }
-        addShellCommand(script, rootName, "Software\\Classes\\" + PROG_ID + "\\shell\\UniZip.Open", "UniZip ile ac", defaultIcon, openCommand);
-        addShellCommand(script, rootName, "Software\\Classes\\" + PROG_ID + "\\shell\\UniZip.ExtractHere", "Buraya cikar", defaultIcon, extractHereCommand);
-        addShellCommand(script, rootName, "Software\\Classes\\" + PROG_ID + "\\shell\\UniZip.ExtractToFolder", "Klasore cikar", defaultIcon, extractToFolderCommand);
-        addShellCommand(script, rootName, "Software\\Classes\\" + PROG_ID + "\\shell\\UniZip.Test", "Arsivi sina", defaultIcon, testCommand);
-    }
-
-    private void addInputContextMenu(StringBuilder script, String rootName, String defaultIcon, boolean grouped) throws Exception {
-        String addCommand = buildCommand("--add-to-archive", "%1");
-        if (grouped) {
-            addGroupedInputMenu(script, rootName, "Software\\Classes\\*\\shell\\UniZip", defaultIcon, addCommand);
-            addGroupedInputMenu(script, rootName, "Software\\Classes\\Directory\\shell\\UniZip", defaultIcon, addCommand);
-            return;
-        }
-        addShellCommand(script, rootName, "Software\\Classes\\*\\shell\\UniZip.AddToArchive", "UniZip arsive ekle", defaultIcon, addCommand);
-        addShellCommand(script, rootName, "Software\\Classes\\Directory\\shell\\UniZip.AddToArchive", "UniZip arsive ekle", defaultIcon, addCommand);
     }
 
     private void addGroupedInputMenu(StringBuilder script, String rootName, String menuKey, String defaultIcon, String addCommand) {
