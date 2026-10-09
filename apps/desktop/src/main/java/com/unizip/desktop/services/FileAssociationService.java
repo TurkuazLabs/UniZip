@@ -90,6 +90,71 @@ public final class FileAssociationService {
         }
     }
 
+    // Explorer verbs can be installed for HKCU without changing the user's default ZIP application.
+    public void installContextMenuCurrentUser() throws Exception {
+        if (!registryTool.isWindows()) {
+            throw new IllegalStateException("Explorer menu is available only on Windows");
+        }
+        registryTool.importRegistryScript(buildContextMenuScript());
+    }
+
+    public void removeContextMenuCurrentUser() throws Exception {
+        if (!registryTool.isWindows()) {
+            throw new IllegalStateException("Explorer menu is available only on Windows");
+        }
+        String root = registryRootName(WindowsRegistryTool.ROOT_CURRENT_USER);
+        StringBuilder script = new StringBuilder("Windows Registry Editor Version 5.00\r\n\r\n");
+        for (String key : contextMenuRegistryKeys()) {
+            deleteKey(script, root, key);
+        }
+        registryTool.importRegistryScript(script.toString());
+    }
+
+    public boolean contextMenuInstalledForCurrentUser() {
+        return registryTool.queryValue(
+                WindowsRegistryTool.ROOT_CURRENT_USER,
+                "Software\\Classes\\SystemFileAssociations\\.zip\\shell\\UniZip",
+                "MUIVerb"
+        ).filter("UniZip"::equals).isPresent();
+    }
+
+    // Package-private so contract tests can inspect the exact, import-ready registry script.
+    String buildContextMenuScript() throws Exception {
+        String root = registryRootName(WindowsRegistryTool.ROOT_CURRENT_USER);
+        StringBuilder script = new StringBuilder("Windows Registry Editor Version 5.00\r\n\r\n");
+        String icon = buildDefaultIcon();
+        String archiveKey = "Software\\Classes\\SystemFileAssociations\\.zip\\shell\\UniZip";
+        // Using SystemFileAssociations keeps verbs available if another ZIP program is default.
+        addString(script, root, archiveKey, "MUIVerb", "UniZip");
+        addString(script, root, archiveKey, "Icon", icon);
+        addString(script, root, archiveKey, "SubCommands", "");
+        addSubCommand(script, root, archiveKey, "open", "UniZip ile ac",
+                icon, buildOpenCommand());
+        addSubCommand(script, root, archiveKey, "extract_here", "Buraya cikar",
+                icon, buildCommand("--extract-here", "%1"));
+        addSubCommand(script, root, archiveKey, "extract_folder", "Klasore cikar",
+                icon, buildCommand("--extract-to-folder", "%1"));
+        addSubCommand(script, root, archiveKey, "test", "Arsivi sina",
+                icon, buildCommand("--test", "%1"));
+
+        // Static Windows verbs receive one selected path via %1. Multi-select requires a
+        // separate IExplorerCommand implementation; do not claim multi-select support.
+        String addCommand = buildCommand("--add-to-archive", "%1");
+        addGroupedInputMenu(script, root,
+                "Software\\Classes\\*\\shell\\UniZip.Compress", icon, addCommand);
+        addGroupedInputMenu(script, root,
+                "Software\\Classes\\Directory\\shell\\UniZip.Compress", icon, addCommand);
+        return script.toString();
+    }
+
+    private List<String> contextMenuRegistryKeys() {
+        return List.of(
+                "Software\\Classes\\SystemFileAssociations\\.zip\\shell\\UniZip",
+                "Software\\Classes\\*\\shell\\UniZip.Compress",
+                "Software\\Classes\\Directory\\shell\\UniZip.Compress"
+        );
+    }
+
     private String buildRegistryScript(
             String root,
             List<String> extensions,
@@ -315,6 +380,14 @@ public final class FileAssociationService {
     }
 
     private String buildCommand(String option, String argumentExpression) throws Exception {
+        Path packagedApp = packagedLauncherPath();
+        if (packagedApp != null) {
+            StringBuilder command = new StringBuilder(quote(packagedApp.toString()));
+            if (option != null && !option.isBlank()) {
+                command.append(' ').append(option);
+            }
+            return command.append(' ').append(quote(argumentExpression)).toString();
+        }
         String javawPath = javaLauncherPath();
         URI codeSourceUri = MainApp.class.getProtectionDomain().getCodeSource().getLocation().toURI();
         Path codeSourcePath = Path.of(codeSourceUri).toAbsolutePath().normalize();
@@ -334,6 +407,10 @@ public final class FileAssociationService {
     }
 
     private String buildDefaultIcon() throws Exception {
+        Path packagedApp = packagedLauncherPath();
+        if (packagedApp != null) {
+            return packagedApp + ",0";
+        }
         URI codeSourceUri = MainApp.class.getProtectionDomain().getCodeSource().getLocation().toURI();
         Path codeSourcePath = Path.of(codeSourceUri).toAbsolutePath().normalize();
         if (Files.isRegularFile(codeSourcePath)) {
@@ -341,6 +418,18 @@ public final class FileAssociationService {
         }
         String javawPath = javaLauncherPath();
         return javawPath + ",0";
+    }
+
+    private Path packagedLauncherPath() {
+        String launcher = System.getProperty("jpackage.app-path", "").trim();
+        if (launcher.isBlank()) {
+            return null;
+        }
+        Path path = Path.of(launcher).toAbsolutePath().normalize();
+        return path.getFileName() != null
+                && path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".exe")
+                && Files.isRegularFile(path)
+                ? path : null;
     }
 
     private String javaLauncherPath() {
