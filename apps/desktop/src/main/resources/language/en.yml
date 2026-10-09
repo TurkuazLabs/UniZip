@@ -268,7 +268,7 @@ update.downloaded_message: "<html>The update package was verified with SHA-256 a
 update.failed: "Update operation failed"
 update.error_message: "<html>The update operation could not be completed:<br>{message}</html>"
 update.not_ready: "The update service is not ready yet"
-button.explorer_menu_install: "Install Explorer context menu"
+button.explorer_menu_install: "Install / repair Explorer context menu"
 button.explorer_menu_remove: "Remove Explorer context menu"
 settings.explorer_menu_info: "Does not change your default ZIP application. Adds open/extract/test for ZIP files and create ZIP for files/folders, for this Windows user only. Single selection is supported in this preview."
 message.explorer_menu_installed: "UniZip Explorer context menu installed. On Windows 11 it may appear under Show more options."
