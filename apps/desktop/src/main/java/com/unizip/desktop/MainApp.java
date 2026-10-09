@@ -144,8 +144,8 @@ public final class MainApp {
 
     /**
      * The Explorer helper process keeps Swing responsive for large ZIPs.
-     * The progress dialog is informational; closing it does not cancel a write.
-     * Cancellation is not advertised until the archive core supports it safely.
+     * Keep the dialog open until the write finishes; closing it cannot safely
+     * cancel an active ZIP operation. Cancellation needs explicit core support.
      */
     private static boolean handleShellCommand(
             String[] args, ArchiveService archiveService, ChecksumTool checksumTool) {
@@ -154,10 +154,10 @@ public final class MainApp {
             return false;
         }
         JDialog progressDialog = new JDialog((java.awt.Frame) null, "UniZip", false);
-        progressDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        progressDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         JPanel content = new JPanel(new BorderLayout(12, 12));
         content.setBorder(javax.swing.BorderFactory.createEmptyBorder(16, 16, 16, 16));
-        content.add(new JLabel("UniZip islemi suruyor. Pencereyi kapatmak islemi iptal etmez."),
+        content.add(new JLabel("UniZip islemi suruyor. Lutfen tamamlanmasini bekleyin."),
                 BorderLayout.NORTH);
         JProgressBar progressBar = new JProgressBar();
         progressBar.setIndeterminate(true);
