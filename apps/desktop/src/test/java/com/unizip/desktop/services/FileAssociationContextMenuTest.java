@@ -1,0 +1,85 @@
+/*
+# Dosya Yolu: apps/desktop/src/test/java/com/unizip/desktop/services/FileAssociationContextMenuTest.java
+# Amac: Varsayilan programi degistirmeyen UniZip Explorer baglamsal menu ve jpackage EXE command parity testleri
+# Modul - Java JUnit 5
+# Version: 0.3.1
+# Aciklama: Registry kurmadan TR/EN menu scripting, EXE launcher ve ZIP shell command kontratini dogrular
+# Bagimli Oldugu Katman: Service | Tool | Config
+*/
+package com.unizip.desktop.services;
+
+import com.unizip.desktop.tools.WindowsRegistryTool;
+import org.junit.jupiter.api.Test;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class FileAssociationContextMenuTest {
+
+    private final FileAssociationService service = new FileAssociationService(new WindowsRegistryTool());
+
+    @Test
+    void contextMenuIsPerUserAndDoesNotChangeDefaultZipHandler() throws Exception {
+        String script = service.buildContextMenuScript();
+        assertTrue(script.startsWith("Windows Registry Editor Version 5.00"));
+        assertTrue(script.contains("HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.zip\\shell\\UniZip"));
+        assertTrue(script.contains("HKEY_CURRENT_USER\\Software\\Classes\\*\\shell\\UniZip.Compress"));
+        assertTrue(script.contains("HKEY_CURRENT_USER\\Software\\Classes\\Directory\\shell\\UniZip.Compress"));
+        assertFalse(script.contains("HKEY_LOCAL_MACHINE"));
+        assertFalse(script.contains("[HKEY_CURRENT_USER\\Software\\Classes\\.zip]"));
+        assertFalse(script.contains("UserChoice"));
+        assertFalse(script.contains("RegisteredApplications"));
+    }
+
+    @Test
+    void menuOnlyOffersCommandsImplementedByCurrentZipEngine() throws Exception {
+        String script = service.buildContextMenuScript();
+        assertTrue(script.contains("--extract-here"));
+        assertTrue(script.contains("--extract-to-folder"));
+        assertTrue(script.contains("--test"));
+        assertTrue(script.contains("--add-to-archive"));
+        assertTrue(script.contains("\"MUIVerb\"=\"UniZip\""));
+        assertFalse(script.contains("--encrypt"));
+        assertFalse(script.contains("--extract-rar"));
+        assertFalse(script.contains("--hash-md5"));
+    }
+
+    @Test
+    void packagedProLauncherIsPreservedInsteadOfStartingCommunityMainApp() throws Exception {
+        String original = System.getProperty("jpackage.app-path");
+        Path launcher = Files.createTempFile("UniZip Pro launcher ", ".exe");
+        try {
+            System.setProperty("jpackage.app-path", launcher.toString());
+            String script = service.buildContextMenuScript();
+            String executable = launcher.toAbsolutePath().normalize().toString();
+            assertTrue(script.contains(executable.replace("\\", "\\\\")));
+            assertFalse(script.contains("com.unizip.desktop.MainApp"));
+            assertFalse(script.contains("javaw.exe"));
+        } finally {
+            if (original == null) {
+                System.clearProperty("jpackage.app-path");
+            } else {
+                System.setProperty("jpackage.app-path", original);
+            }
+            Files.deleteIfExists(launcher);
+        }
+    }
+
+    @Test
+    void absentPackagedLauncherFallsBackToJavaWithoutInjectingShellArguments() throws Exception {
+        String original = System.getProperty("jpackage.app-path");
+        try {
+            System.setProperty("jpackage.app-path", "nonexistent-UniZip.exe");
+            String script = service.buildContextMenuScript();
+            assertTrue(script.contains("com.unizip.desktop.MainApp") || script.contains("-jar"));
+            assertTrue(script.contains("%1"));
+        } finally {
+            if (original == null) {
+                System.clearProperty("jpackage.app-path");
+            } else {
+                System.setProperty("jpackage.app-path", original);
+            }
+        }
+    }
+}
