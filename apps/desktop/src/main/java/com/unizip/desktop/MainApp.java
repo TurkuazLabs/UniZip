@@ -117,6 +117,11 @@ public final class MainApp {
         FileSystemTool fileSystemTool = new FileSystemTool();
         ExternalEditorTool externalEditorTool = new ExternalEditorTool();
         ArchiveService archiveService = new ArchiveService(javaZipTool, fileSystemTool, logService, checksumTool, externalEditorTool, settingsService);
+        if (args.length > 0 && "--batch".equalsIgnoreCase(args[0])) {
+            int exitCode = runBatchShellCommand(args, archiveService, checksumTool);
+            System.exit(exitCode);
+            return;
+        }
         if (handleShellCommand(args, archiveService, checksumTool)) {
             return;
         }
@@ -140,6 +145,33 @@ public final class MainApp {
             return;
         }
         archiveController.openRecentArchive(Path.of(args[0]));
+    }
+
+    /**
+     * A supported non-interactive entrypoint for automation and real packaged
+     * launcher smoke tests. It calls the same service as Explorer's GUI verbs.
+     * Usage: --batch <shell-verb> <single-file-or-directory>
+     */
+    static int runBatchShellCommand(
+            String[] args, ArchiveService archiveService, ChecksumTool checksumTool) {
+        try {
+            if (args == null || args.length != 3
+                    || !ExplorerShellCommandService.supports(args[1])) {
+                throw new IllegalArgumentException(
+                        "Kullanim: --batch <desteklenen Explorer komutu> <dosya>");
+            }
+            ArchiveOperationResult result = new ExplorerShellCommandService(
+                    archiveService, checksumTool).execute(new String[]{args[1], args[2]});
+            if (result.success()) {
+                System.out.println(result.message());
+                return 0;
+            }
+            System.err.println(result.message());
+            return 2;
+        } catch (Exception exception) {
+            System.err.println("UniZip batch hatasi: " + exception.getMessage());
+            return 3;
+        }
     }
 
     /**
