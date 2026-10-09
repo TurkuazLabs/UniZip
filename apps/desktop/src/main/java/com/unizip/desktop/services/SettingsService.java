@@ -73,6 +73,18 @@ public final class SettingsService {
         fileAssociationService.associateExtensions(scope, extensions, contextMenuEnabled(), groupContextMenu());
     }
 
+    public void installExplorerContextMenu() throws Exception {
+        fileAssociationService.installContextMenuCurrentUser();
+    }
+
+    public void removeExplorerContextMenu() throws Exception {
+        fileAssociationService.removeContextMenuCurrentUser();
+    }
+
+    public boolean explorerContextMenuInstalled() {
+        return fileAssociationService.contextMenuInstalledForCurrentUser();
+    }
+
     public boolean fileAssociationSupported() {
         return fileAssociationService.isWindows();
     }
