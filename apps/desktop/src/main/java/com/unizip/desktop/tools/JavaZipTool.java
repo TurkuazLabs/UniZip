@@ -343,8 +343,17 @@ public final class JavaZipTool {
     ) throws IOException {
         int[] count = {0};
         try (var stream = Files.walk(sourceDirectory)) {
-            stream.filter(Files::isRegularFile).forEach(path -> {
+            stream.forEach(path -> {
                 try {
+                    if (Files.isSymbolicLink(path)) {
+                        throw new IOException("ZIP kaynaginda sembolik baglanti desteklenmiyor: " + path);
+                    }
+                    if (Files.isDirectory(path)) {
+                        return;
+                    }
+                    if (!Files.isRegularFile(path)) {
+                        throw new IOException("ZIP kaynaginda desteklenmeyen dosya tipi: " + path);
+                    }
                     Path relative = sourceDirectory.relativize(path);
                     Path entryName = zipRoot.resolve(relative);
                     addFileWithRequestedName(zipOutputStream, path, entryName, usedEntryNames, overwriteExisting);
@@ -738,12 +747,42 @@ public final class JavaZipTool {
     }
 
     public int createZip(Path inputPath, Path outputZip) throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(outputZip)))) {
-            if (Files.isDirectory(inputPath)) {
-                return addDirectory(zipOutputStream, inputPath, inputPath.getFileName());
+        Path source = inputPath.toAbsolutePath().normalize();
+        Path destination = outputZip.toAbsolutePath().normalize();
+        if (Files.isSymbolicLink(source)
+                || (!Files.isRegularFile(source) && !Files.isDirectory(source))) {
+            throw new IOException("ZIP kaynagi normal dosya veya klasor olmali: " + source);
+        }
+        if (Files.exists(destination, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
+            throw new java.nio.file.FileAlreadyExistsException(destination.toString());
+        }
+        if (Files.isDirectory(source) && destination.startsWith(source)) {
+            throw new IOException("ZIP cikti dosyasi kaynak klasorun icinde olamaz");
+        }
+        if (source.equals(destination)) {
+            throw new IOException("Kaynak dosya ZIP cikti hedefi olamaz");
+        }
+        Path destinationParent = destination.getParent();
+        if (destinationParent == null || !Files.isDirectory(destinationParent)) {
+            throw new IOException("ZIP hedef klasoru bulunamadi");
+        }
+        Path temporary = Files.createTempFile(destinationParent, ".unizip-create-", ".zip.part");
+        try {
+            int count;
+            try (ZipOutputStream zipOutputStream = new ZipOutputStream(
+                    new BufferedOutputStream(Files.newOutputStream(temporary)))) {
+                if (Files.isDirectory(source)) {
+                    count = addDirectory(zipOutputStream, source, source.getFileName());
+                } else {
+                    addFile(zipOutputStream, source, source.getFileName());
+                    count = 1;
+                }
             }
-            addFile(zipOutputStream, inputPath, inputPath.getFileName());
-            return 1;
+            // No REPLACE_EXISTING: do not overwrite an existing user archive.
+            Files.move(temporary, destination);
+            return count;
+        } finally {
+            Files.deleteIfExists(temporary);
         }
     }
 
