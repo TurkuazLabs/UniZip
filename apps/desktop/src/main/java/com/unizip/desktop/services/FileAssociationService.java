@@ -13,6 +13,7 @@ import com.unizip.desktop.MainApp;
 import com.unizip.desktop.models.ArchiveFormat;
 import com.unizip.desktop.models.FileAssociationScope;
 import com.unizip.desktop.models.FileAssociationStatusModel;
+import com.unizip.desktop.models.WindowsFileAssociationIdentity;
 import com.unizip.desktop.tools.WindowsRegistryTool;
 
 import java.net.URI;
@@ -26,11 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public final class FileAssociationService {
-    private static final String APP_NAME = "UniZip";
-    private static final String APP_EXE_NAME = "UniZip.exe"; // developer fallback only
-    private static final String PROG_ID = "UniZip.Archive";
-    private static final String PROG_ID_DESCRIPTION = "UniZip Archive";
-    private static final String CAPABILITIES_KEY = "Software\\UniZip\\Capabilities";
+    private static final String LEGACY_PROG_ID = WindowsFileAssociationIdentity.community().progId();
     private static final String REGISTERED_APPLICATIONS_KEY = "Software\\RegisteredApplications";
     private static final String FILE_EXTS_KEY = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts";
 
@@ -259,32 +256,33 @@ public final class FileAssociationService {
         StringBuilder script = new StringBuilder();
         script.append("Windows Registry Editor Version 5.00\r\n\r\n");
 
+        WindowsFileAssociationIdentity identity = associationIdentity();
         String applicationsKey = "Software\\Classes\\Applications\\" + applicationExecutableName();
-        addDefault(script, rootName, applicationsKey, APP_NAME);
+        addDefault(script, rootName, applicationsKey, identity.applicationName());
         addDefault(script, rootName, applicationsKey + "\\DefaultIcon", defaultIcon);
         addDefault(script, rootName, applicationsKey + "\\shell", "open");
         addDefault(script, rootName, applicationsKey + "\\shell\\open", "UniZip ile ac");
         addDefault(script, rootName, applicationsKey + "\\shell\\open\\command", openCommand);
 
-        addDefault(script, rootName, "Software\\Classes\\" + PROG_ID, PROG_ID_DESCRIPTION);
-        addString(script, rootName, "Software\\Classes\\" + PROG_ID, "FriendlyTypeName", PROG_ID_DESCRIPTION);
-        addDefault(script, rootName, "Software\\Classes\\" + PROG_ID + "\\DefaultIcon", defaultIcon);
-        addDefault(script, rootName, "Software\\Classes\\" + PROG_ID + "\\shell", "open");
-        addDefault(script, rootName, "Software\\Classes\\" + PROG_ID + "\\shell\\open", "UniZip ile ac");
-        addDefault(script, rootName, "Software\\Classes\\" + PROG_ID + "\\shell\\open\\command", openCommand);
+        addDefault(script, rootName, "Software\\Classes\\" + identity.progId(), identity.progIdDescription());
+        addString(script, rootName, "Software\\Classes\\" + identity.progId(), "FriendlyTypeName", identity.progIdDescription());
+        addDefault(script, rootName, "Software\\Classes\\" + identity.progId() + "\\DefaultIcon", defaultIcon);
+        addDefault(script, rootName, "Software\\Classes\\" + identity.progId() + "\\shell", "open");
+        addDefault(script, rootName, "Software\\Classes\\" + identity.progId() + "\\shell\\open", "UniZip ile ac");
+        addDefault(script, rootName, "Software\\Classes\\" + identity.progId() + "\\shell\\open\\command", openCommand);
 
-        addString(script, rootName, CAPABILITIES_KEY, "ApplicationName", APP_NAME);
-        addString(script, rootName, CAPABILITIES_KEY, "ApplicationDescription", "UniZip Community archive manager");
-        addString(script, rootName, REGISTERED_APPLICATIONS_KEY, APP_NAME, CAPABILITIES_KEY);
+        addString(script, rootName, identity.capabilitiesKey(), "ApplicationName", identity.applicationName());
+        addString(script, rootName, identity.capabilitiesKey(), "ApplicationDescription", identity.applicationDescription());
+        addString(script, rootName, REGISTERED_APPLICATIONS_KEY, identity.applicationName(), identity.capabilitiesKey());
 
         for (String extension : supportedAssociationExtensions(extensions)) {
             String dottedExtension = dotExtension(extension);
             // OpenWithProgids and RegisteredApplications advertise candidate support.
             // NEVER set HKCU/HKLM \\.zip default ProgID here. The user chooses in
             // Settings > Apps > Default apps.
-            addString(script, rootName, CAPABILITIES_KEY + "\\FileAssociations", dottedExtension, PROG_ID);
+            addString(script, rootName, identity.capabilitiesKey() + "\\FileAssociations", dottedExtension, identity.progId());
             addString(script, rootName, applicationsKey + "\\SupportedTypes", dottedExtension, "");
-            addOpenWithProgId(script, rootName, "Software\\Classes\\" + dottedExtension + "\\OpenWithProgids", PROG_ID);
+            addOpenWithProgId(script, rootName, "Software\\Classes\\" + dottedExtension + "\\OpenWithProgids", identity.progId());
         }
 
         // File handler registration is deliberately independent of shell menu lifecycle.
@@ -292,11 +290,11 @@ public final class FileAssociationService {
     }
 
     private void clearOldContextMenus(StringBuilder script, String rootName) {
-        deleteKey(script, rootName, "Software\\Classes\\" + PROG_ID + "\\shell\\UniZip");
-        deleteKey(script, rootName, "Software\\Classes\\" + PROG_ID + "\\shell\\UniZip.Open");
-        deleteKey(script, rootName, "Software\\Classes\\" + PROG_ID + "\\shell\\UniZip.ExtractHere");
-        deleteKey(script, rootName, "Software\\Classes\\" + PROG_ID + "\\shell\\UniZip.ExtractToFolder");
-        deleteKey(script, rootName, "Software\\Classes\\" + PROG_ID + "\\shell\\UniZip.Test");
+        deleteKey(script, rootName, "Software\\Classes\\" + LEGACY_PROG_ID + "\\shell\\UniZip");
+        deleteKey(script, rootName, "Software\\Classes\\" + LEGACY_PROG_ID + "\\shell\\UniZip.Open");
+        deleteKey(script, rootName, "Software\\Classes\\" + LEGACY_PROG_ID + "\\shell\\UniZip.ExtractHere");
+        deleteKey(script, rootName, "Software\\Classes\\" + LEGACY_PROG_ID + "\\shell\\UniZip.ExtractToFolder");
+        deleteKey(script, rootName, "Software\\Classes\\" + LEGACY_PROG_ID + "\\shell\\UniZip.Test");
         deleteKey(script, rootName, "Software\\Classes\\*\\shell\\UniZip");
         deleteKey(script, rootName, "Software\\Classes\\*\\shell\\UniZip.AddToArchive");
         deleteKey(script, rootName, "Software\\Classes\\Directory\\shell\\UniZip");
@@ -433,8 +431,12 @@ public final class FileAssociationService {
         if (value.isBlank()) {
             return "";
         }
-        if (PROG_ID.equalsIgnoreCase(value) || value.toLowerCase(Locale.ROOT).contains("unizip")) {
-            return APP_NAME;
+        if (WindowsFileAssociationIdentity.pro().progId().equalsIgnoreCase(value)) {
+            return WindowsFileAssociationIdentity.pro().applicationName();
+        }
+        if (WindowsFileAssociationIdentity.community().progId().equalsIgnoreCase(value)
+                || value.toLowerCase(Locale.ROOT).contains("unizip")) {
+            return WindowsFileAssociationIdentity.community().applicationName();
         }
         return "";
     }
@@ -443,9 +445,13 @@ public final class FileAssociationService {
         return "." + normalizeExtension(extension);
     }
 
+    private WindowsFileAssociationIdentity associationIdentity() {
+        return WindowsFileAssociationIdentity.forExecutable(applicationExecutableName());
+    }
+
     private String applicationExecutableName() {
         Path packagedApp = packagedLauncherPath();
-        return packagedApp != null ? packagedApp.getFileName().toString() : APP_EXE_NAME;
+        return packagedApp != null ? packagedApp.getFileName().toString() : WindowsFileAssociationIdentity.COMMUNITY_EXECUTABLE;
     }
 
     private String buildOpenCommand() throws Exception {
