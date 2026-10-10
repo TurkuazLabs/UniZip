@@ -76,8 +76,7 @@ class FileAssociationContextMenuTest {
                 "\"UniZip.exe\" \"%1\"", "UniZip.exe,0", false, false);
         assertTrue(script.contains("\\Software\\Classes\\.zip\\OpenWithProgids"));
         for (String extension : java.util.List.of(".7z", ".rar", ".jar", ".exe")) {
-            assertFalse(script.contains("FileAssociations]\\r\\n\"" + extension + "\"="));
-            assertFalse(script.contains("SupportedTypes]\\r\\n\"" + extension + "\"="));
+            assertFalse(script.contains("\"" + extension + "\"="));
             assertFalse(script.contains("\\Classes\\" + extension + "\\OpenWithProgids"));
         }
     }
