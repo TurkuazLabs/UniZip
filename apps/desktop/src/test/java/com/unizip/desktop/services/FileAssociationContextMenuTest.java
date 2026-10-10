@@ -65,6 +65,24 @@ class FileAssociationContextMenuTest {
     }
 
     @Test
+    void onlyFullySupportedDesktopFormatsAreAdvertisedToWindows() throws Exception {
+        assertEquals(java.util.List.of("zip"),
+                service.supportedAssociationExtensions(
+                        java.util.List.of("ZIP", ".zip", "7z", "rar", "jar", "tar", "exe")));
+
+        String script = service.buildRegistryScript(
+                WindowsRegistryTool.ROOT_CURRENT_USER,
+                java.util.List.of("zip", "7z", "rar", "jar", "exe"),
+                "\"UniZip.exe\" \"%1\"", "UniZip.exe,0", false, false);
+        assertTrue(script.contains("\\Software\\Classes\\.zip\\OpenWithProgids"));
+        for (String extension : java.util.List.of(".7z", ".rar", ".jar", ".exe")) {
+            assertFalse(script.contains("FileAssociations]\\r\\n\"" + extension + "\"="));
+            assertFalse(script.contains("SupportedTypes]\\r\\n\"" + extension + "\"="));
+            assertFalse(script.contains("\\Classes\\" + extension + "\\OpenWithProgids"));
+        }
+    }
+
+    @Test
     void potentialHandlerRegistrationNeverSetsOrDeletesTheDefaultApp() throws Exception {
         String script = service.buildRegistryScript(
                 WindowsRegistryTool.ROOT_CURRENT_USER, java.util.List.of("zip"),
