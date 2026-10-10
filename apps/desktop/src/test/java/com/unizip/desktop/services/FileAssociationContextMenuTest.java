@@ -53,16 +53,50 @@ class FileAssociationContextMenuTest {
                 java.util.List.of("zip", "7z"),
                 "\"C:\\Apps\\UniZip Pro.exe\" \"%1\"",
                 "C:\\Apps\\UniZip Pro.exe,0", true, true);
-        // Deleting legacy keys is expected. Only NEW verb creation is forbidden.
-        String additionsOnly = script.lines()
-                .filter(line -> !line.startsWith("[-"))
-                .collect(java.util.stream.Collectors.joining("\n"));
-        assertFalse(additionsOnly.contains("shell\\UniZip.Compress"));
-        assertFalse(additionsOnly.contains("shell\\UniZip]"));
+        assertFalse(script.contains("shell\\UniZip.Compress"));
+        assertFalse(script.contains("shell\\UniZip]"));
+        assertFalse(script.contains("[-HKEY_CURRENT_USER"));
         assertFalse(script.contains("\"AppliesTo\""));
         assertFalse(script.contains("SystemFileAssociations"));
-        assertTrue(script.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\*\\shell\\UniZip]"));
-        assertTrue(script.contains("HKEY_CURRENT_USER\\Software\\Classes\\.zip"));
+        assertTrue(script.contains("HKEY_CURRENT_USER\\Software\\Classes\\.zip\\OpenWithProgids"));
+        assertFalse(script.contains("[HKEY_CURRENT_USER\\Software\\Classes\\.zip]"));
+        assertFalse(script.contains("\\UserChoice"));
+        assertFalse(script.contains("[-HKEY_CURRENT_USER"));
+    }
+
+    @Test
+    void potentialHandlerRegistrationNeverSetsOrDeletesTheDefaultApp() throws Exception {
+        String script = service.buildRegistryScript(
+                WindowsRegistryTool.ROOT_CURRENT_USER, java.util.List.of("zip"),
+                "\"UniZip.exe\" \"%1\"", "UniZip.exe,0", false, false);
+        assertTrue(script.contains("Software\\\\RegisteredApplications"));
+        assertTrue(script.contains("Software\\\\Classes\\\\.zip\\\\OpenWithProgids"));
+        assertTrue(script.contains("Software\\\\UniZip\\\\Capabilities\\\\FileAssociations"));
+        assertFalse(script.contains("[HKEY_CURRENT_USER\\\\Software\\\\Classes\\\\.zip]"));
+        assertFalse(script.contains("UserChoice"));
+        assertFalse(script.contains("[-"));
+        assertFalse(script.contains("UniZip.Compress"));
+        assertFalse(script.contains("SystemFileAssociations"));
+    }
+
+    @Test
+    void packagedProApplicationRegistersItsActualExecutableName() throws Exception {
+        String old = System.getProperty("jpackage.app-path");
+        Path launcher = Files.createTempFile("UniZip Pro ", ".exe");
+        try {
+            System.setProperty("jpackage.app-path", launcher.toString());
+            String script = service.buildRegistryScript(
+                    WindowsRegistryTool.ROOT_CURRENT_USER, java.util.List.of("zip"),
+                    "\"C:\\\\Apps\\\\UniZip Pro.exe\" \"%1\"",
+                    "C:\\\\Apps\\\\UniZip Pro.exe,0", false, false);
+            assertTrue(script.contains("Applications\\\\"
+                    + launcher.getFileName() + "]"));
+            assertFalse(script.contains("Applications\\\\UniZip.exe]"));
+        } finally {
+            if (old == null) System.clearProperty("jpackage.app-path");
+            else System.setProperty("jpackage.app-path", old);
+            Files.deleteIfExists(launcher);
+        }
     }
 
     @Test

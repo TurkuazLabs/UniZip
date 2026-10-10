@@ -98,6 +98,22 @@ a partial Registry import sets Repair required; Install / Repair refreshes the k
 Remove stays enabled for partial registrations, without altering the default ZIP
 application. An isolated Windows HKCU registry round-trip test covers all states.
 
+## Respect Windows default application ownership
+
+The separate "Register available app" action now writes only the executable's
+actual Applications entry, the UniZip ProgID, OpenWithProgids, SupportedTypes and
+RegisteredApplications/Capabilities metadata. It no longer writes a default
+extension ProgID, deletes UserChoice or implicitly installs Explorer shell verbs.
+The packaged Pro EXE is registered by its actual filename (`UniZip Pro.exe`),
+not a hardcoded Community `UniZip.exe`.
+
+Only Windows Settings > Apps > Default apps changes the default handler; the
+right-click menu is independently installed in Settings > System. This follows
+the Windows 10/11 default-app platform protection model. Regression tests check
+the generated registry scripts and actual launcher-dependent registration.
+
+Reference: https://learn.microsoft.com/en-us/windows/apps/develop/windows-integration/default-apps-platform
+
 ## Acceptance tests
 
 1. On Windows 10 and 11, keep 7-Zip as default ZIP program; installing UniZip verbs must not change it.

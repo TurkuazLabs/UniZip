@@ -26,10 +26,9 @@ import java.util.Set;
 
 public final class FileAssociationService {
     private static final String APP_NAME = "UniZip";
-    private static final String APP_EXE_NAME = "UniZip.exe";
+    private static final String APP_EXE_NAME = "UniZip.exe"; // developer fallback only
     private static final String PROG_ID = "UniZip.Archive";
     private static final String PROG_ID_DESCRIPTION = "UniZip Archive";
-    private static final String APPLICATIONS_KEY = "Software\\Classes\\Applications\\" + APP_EXE_NAME;
     private static final String CAPABILITIES_KEY = "Software\\UniZip\\Capabilities";
     private static final String REGISTERED_APPLICATIONS_KEY = "Software\\RegisteredApplications";
     private static final String FILE_EXTS_KEY = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts";
@@ -82,18 +81,9 @@ public final class FileAssociationService {
                 contextMenuEnabled,
                 groupContextMenu
         );
+        // Register as an available handler only: Windows 10/11 protects default
+        // selection and UserChoice. Menu install has its own explicit Settings action.
         registryTool.importRegistryScript(registryScript);
-        // Archive file associations and context-menu registration are separate.
-        // If enabled in preferences, install only the current user's modern classic
-        // Explorer menu; never recreate the obsolete ProgID / wildcard verb trees.
-        if (contextMenuEnabled) {
-            installContextMenuCurrentUser();
-        }
-        if (scope == FileAssociationScope.CURRENT_USER) {
-            for (String extension : normalizedExtensions) {
-                clearCurrentUserChoice(extension);
-            }
-        }
     }
 
     // Explorer verbs can be installed for HKCU without changing the user's default ZIP application.
@@ -268,11 +258,12 @@ public final class FileAssociationService {
         StringBuilder script = new StringBuilder();
         script.append("Windows Registry Editor Version 5.00\r\n\r\n");
 
-        addDefault(script, rootName, APPLICATIONS_KEY, APP_NAME);
-        addDefault(script, rootName, APPLICATIONS_KEY + "\\DefaultIcon", defaultIcon);
-        addDefault(script, rootName, APPLICATIONS_KEY + "\\shell", "open");
-        addDefault(script, rootName, APPLICATIONS_KEY + "\\shell\\open", "UniZip ile ac");
-        addDefault(script, rootName, APPLICATIONS_KEY + "\\shell\\open\\command", openCommand);
+        String applicationsKey = "Software\\Classes\\Applications\\" + applicationExecutableName();
+        addDefault(script, rootName, applicationsKey, APP_NAME);
+        addDefault(script, rootName, applicationsKey + "\\DefaultIcon", defaultIcon);
+        addDefault(script, rootName, applicationsKey + "\\shell", "open");
+        addDefault(script, rootName, applicationsKey + "\\shell\\open", "UniZip ile ac");
+        addDefault(script, rootName, applicationsKey + "\\shell\\open\\command", openCommand);
 
         addDefault(script, rootName, "Software\\Classes\\" + PROG_ID, PROG_ID_DESCRIPTION);
         addString(script, rootName, "Software\\Classes\\" + PROG_ID, "FriendlyTypeName", PROG_ID_DESCRIPTION);
@@ -287,15 +278,15 @@ public final class FileAssociationService {
 
         for (String extension : extensions) {
             String dottedExtension = dotExtension(extension);
-            addDefault(script, rootName, "Software\\Classes\\" + dottedExtension, PROG_ID);
+            // OpenWithProgids and RegisteredApplications advertise candidate support.
+            // NEVER set HKCU/HKLM \\.zip default ProgID here. The user chooses in
+            // Settings > Apps > Default apps.
             addString(script, rootName, CAPABILITIES_KEY + "\\FileAssociations", dottedExtension, PROG_ID);
-            addString(script, rootName, APPLICATIONS_KEY + "\\SupportedTypes", dottedExtension, "");
+            addString(script, rootName, applicationsKey + "\\SupportedTypes", dottedExtension, "");
             addOpenWithProgId(script, rootName, "Software\\Classes\\" + dottedExtension + "\\OpenWithProgids", PROG_ID);
         }
 
-        // Remove old UniZip-only context verbs: the new per-user menu is
-        // managed independently and never rewrites an existing file association.
-        clearOldContextMenus(script, rootName);
+        // File handler registration is deliberately independent of shell menu lifecycle.
         return script.toString();
     }
 
@@ -388,11 +379,6 @@ public final class FileAssociationService {
         return registryTool.queryDefaultValue(WindowsRegistryTool.ROOT_LOCAL_MACHINE, extensionKey);
     }
 
-    private void clearCurrentUserChoice(String extension) {
-        String userChoiceKey = FILE_EXTS_KEY + "\\" + dotExtension(extension) + "\\UserChoice";
-        registryTool.deleteTreeIfExists(WindowsRegistryTool.ROOT_CURRENT_USER, userChoiceKey);
-    }
-
     private List<String> normalizeExtensions(List<String> extensions) {
         Set<String> normalized = new LinkedHashSet<>();
         if (extensions == null) {
@@ -443,6 +429,11 @@ public final class FileAssociationService {
 
     private String dotExtension(String extension) {
         return "." + normalizeExtension(extension);
+    }
+
+    private String applicationExecutableName() {
+        Path packagedApp = packagedLauncherPath();
+        return packagedApp != null ? packagedApp.getFileName().toString() : APP_EXE_NAME;
     }
 
     private String buildOpenCommand() throws Exception {
