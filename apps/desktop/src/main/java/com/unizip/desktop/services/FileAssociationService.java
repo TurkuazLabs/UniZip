@@ -10,6 +10,7 @@ Bagimli Oldugu Katman: Service | Tool | Repo/Model
 package com.unizip.desktop.services;
 
 import com.unizip.desktop.MainApp;
+import com.unizip.desktop.models.ArchiveFormat;
 import com.unizip.desktop.models.FileAssociationScope;
 import com.unizip.desktop.models.FileAssociationStatusModel;
 import com.unizip.desktop.tools.WindowsRegistryTool;
@@ -64,9 +65,9 @@ public final class FileAssociationService {
         if (!registryTool.isWindows()) {
             throw new IllegalStateException("Windows Registry sadece Windows uzerinde desteklenir");
         }
-        List<String> normalizedExtensions = normalizeExtensions(extensions);
+        List<String> normalizedExtensions = supportedAssociationExtensions(extensions);
         if (normalizedExtensions.isEmpty()) {
-            throw new IllegalArgumentException("Iliskilendirilecek uzanti bulunamadi");
+            throw new IllegalArgumentException("Bu surumde iliskilendirme icin desteklenen arsiv uzantisi bulunamadi (ZIP)");
         }
         String root = scope == FileAssociationScope.ALL_USERS
                 ? WindowsRegistryTool.ROOT_LOCAL_MACHINE
@@ -276,7 +277,7 @@ public final class FileAssociationService {
         addString(script, rootName, CAPABILITIES_KEY, "ApplicationDescription", "UniZip Community archive manager");
         addString(script, rootName, REGISTERED_APPLICATIONS_KEY, APP_NAME, CAPABILITIES_KEY);
 
-        for (String extension : extensions) {
+        for (String extension : supportedAssociationExtensions(extensions)) {
             String dottedExtension = dotExtension(extension);
             // OpenWithProgids and RegisteredApplications advertise candidate support.
             // NEVER set HKCU/HKLM \\.zip default ProgID here. The user chooses in
@@ -377,6 +378,17 @@ public final class FileAssociationService {
     private Optional<String> allUsersAssociationValue(String extension) {
         String extensionKey = "Software\\Classes\\" + dotExtension(extension);
         return registryTool.queryDefaultValue(WindowsRegistryTool.ROOT_LOCAL_MACHINE, extensionKey);
+    }
+
+    // Advertise only formats that the actual archive engine can currently open.
+    // E.g. JAR is a ZIP container but the desktop accepts only the .zip suffix.
+    List<String> supportedAssociationExtensions(List<String> extensions) {
+        return normalizeExtensions(extensions).stream()
+                .filter(extension -> {
+                    ArchiveFormat format = ArchiveFormat.fromExtension(extension);
+                    return format.fullySupported() && format.displayName().equals(extension);
+                })
+                .toList();
     }
 
     private List<String> normalizeExtensions(List<String> extensions) {
