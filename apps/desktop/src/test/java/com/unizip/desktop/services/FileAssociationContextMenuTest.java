@@ -69,10 +69,10 @@ class FileAssociationContextMenuTest {
         String script = service.buildRegistryScript(
                 WindowsRegistryTool.ROOT_CURRENT_USER, java.util.List.of("zip"),
                 "\"UniZip.exe\" \"%1\"", "UniZip.exe,0", false, false);
-        assertTrue(script.contains("Software\\\\RegisteredApplications"));
-        assertTrue(script.contains("Software\\\\Classes\\\\.zip\\\\OpenWithProgids"));
-        assertTrue(script.contains("Software\\\\UniZip\\\\Capabilities\\\\FileAssociations"));
-        assertFalse(script.contains("[HKEY_CURRENT_USER\\\\Software\\\\Classes\\\\.zip]"));
+        assertTrue(script.contains("Software\\RegisteredApplications"));
+        assertTrue(script.contains("Software\\Classes\\.zip\\OpenWithProgids"));
+        assertTrue(script.contains("Software\\UniZip\\Capabilities\\FileAssociations"));
+        assertFalse(script.contains("[HKEY_CURRENT_USER\\Software\\Classes\\.zip]"));
         assertFalse(script.contains("UserChoice"));
         assertFalse(script.contains("[-"));
         assertFalse(script.contains("UniZip.Compress"));
@@ -89,9 +89,9 @@ class FileAssociationContextMenuTest {
                     WindowsRegistryTool.ROOT_CURRENT_USER, java.util.List.of("zip"),
                     "\"C:\\\\Apps\\\\UniZip Pro.exe\" \"%1\"",
                     "C:\\\\Apps\\\\UniZip Pro.exe,0", false, false);
-            assertTrue(script.contains("Applications\\\\"
+            assertTrue(script.contains("Applications\\"
                     + launcher.getFileName() + "]"));
-            assertFalse(script.contains("Applications\\\\UniZip.exe]"));
+            assertFalse(script.contains("Applications\\UniZip.exe]"));
         } finally {
             if (old == null) System.clearProperty("jpackage.app-path");
             else System.setProperty("jpackage.app-path", old);
