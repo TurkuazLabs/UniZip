@@ -89,6 +89,15 @@ Windows 10/11 GUI visibility still needs manual acceptance.
 - The true Windows 11 primary menu, MSI install/upgrade, and GUI right-click
   visual acceptance remain separate release gates.
 
+## Portable EXE path health and repair
+
+Settings > System distinguishes **Not installed**, **Ready**, and **Repair required**.
+All six UniZip menu roots and the registered Open, Test, ZIP creation and SHA-256
+verifier commands must match the active launcher. Moving the portable folder or
+a partial Registry import sets Repair required; Install / Repair refreshes the keys.
+Remove stays enabled for partial registrations, without altering the default ZIP
+application. An isolated Windows HKCU registry round-trip test covers all states.
+
 ## Acceptance tests
 
 1. On Windows 10 and 11, keep 7-Zip as default ZIP program; installing UniZip verbs must not change it.

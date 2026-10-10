@@ -13,6 +13,7 @@ import com.unizip.desktop.models.FileAssociationScope;
 import com.unizip.desktop.models.FileAssociationStatusModel;
 import com.unizip.desktop.models.LanguageOptionModel;
 import com.unizip.desktop.models.ThemeOptionModel;
+import com.unizip.desktop.services.FileAssociationService;
 import com.unizip.desktop.services.LanguageService;
 import com.unizip.desktop.services.SettingsService;
 import com.unizip.desktop.services.ThemeService;
@@ -147,20 +148,36 @@ public final class SettingsDialog extends JDialog {
         JButton installButton = new JButton(languageService.text("button.explorer_menu_install"));
         JButton removeButton = new JButton(languageService.text("button.explorer_menu_remove"));
         boolean supported = settingsService.fileAssociationSupported();
-        boolean installed = supported && settingsService.explorerContextMenuInstalled();
-        // Installing again is also a repair operation for moved portable builds.
+        FileAssociationService.ExplorerMenuStatus status = supported
+                ? settingsService.explorerMenuStatus()
+                : FileAssociationService.ExplorerMenuStatus.NOT_INSTALLED;
+        // Partial menu registrations must remain uninstallable.
         installButton.setEnabled(supported);
-        removeButton.setEnabled(installed);
-        installButton.addActionListener(event -> updateExplorerMenu(true, installButton, removeButton));
-        removeButton.addActionListener(event -> updateExplorerMenu(false, installButton, removeButton));
+        removeButton.setEnabled(supported
+                && status != FileAssociationService.ExplorerMenuStatus.NOT_INSTALLED);
+        JLabel statusLabel = mutedLabel(explorerMenuStatusText(status));
+        installButton.addActionListener(event ->
+                updateExplorerMenu(true, installButton, removeButton, statusLabel));
+        removeButton.addActionListener(event ->
+                updateExplorerMenu(false, installButton, removeButton, statusLabel));
         explorerButtons.add(installButton);
         explorerButtons.add(removeButton);
         addFullWidthRow(panel, 6, explorerButtons);
         addFullWidthRow(panel, 7, mutedLabel(languageService.text("settings.explorer_menu_info")));
+        addFullWidthRow(panel, 8, statusLabel);
         return panel;
     }
 
-    private void updateExplorerMenu(boolean install, JButton installButton, JButton removeButton) {
+    private String explorerMenuStatusText(FileAssociationService.ExplorerMenuStatus status) {
+        return switch (status) {
+            case READY -> languageService.text("settings.explorer_status_ready");
+            case REPAIR_REQUIRED -> languageService.text("settings.explorer_status_repair");
+            case NOT_INSTALLED -> languageService.text("settings.explorer_status_absent");
+        };
+    }
+
+    private void updateExplorerMenu(boolean install, JButton installButton,
+                                    JButton removeButton, JLabel statusLabel) {
         installButton.setEnabled(false);
         removeButton.setEnabled(false);
         new SwingWorker<Void, Void>() {
@@ -195,9 +212,13 @@ public final class SettingsDialog extends JDialog {
                     );
                 } finally {
                     boolean supported = settingsService.fileAssociationSupported();
-                    boolean installed = supported && settingsService.explorerContextMenuInstalled();
+                    FileAssociationService.ExplorerMenuStatus status = supported
+                            ? settingsService.explorerMenuStatus()
+                            : FileAssociationService.ExplorerMenuStatus.NOT_INSTALLED;
+                    statusLabel.setText(explorerMenuStatusText(status));
                     installButton.setEnabled(supported);
-                    removeButton.setEnabled(installed);
+                    removeButton.setEnabled(supported
+                            && status != FileAssociationService.ExplorerMenuStatus.NOT_INSTALLED);
                 }
             }
         }.execute();

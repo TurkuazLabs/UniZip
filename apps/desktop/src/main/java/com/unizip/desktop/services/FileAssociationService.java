@@ -122,11 +122,60 @@ public final class FileAssociationService {
         return script.toString();
     }
 
+    public enum ExplorerMenuStatus {
+        NOT_INSTALLED, REPAIR_REQUIRED, READY
+    }
+
     public boolean contextMenuInstalledForCurrentUser() {
-        return contextMenuRegistryKeys().stream()
-                .allMatch(key -> registryTool.queryValue(
-                        WindowsRegistryTool.ROOT_CURRENT_USER, key, "MUIVerb"
-                ).filter("UniZip"::equals).isPresent());
+        return contextMenuStatusForCurrentUser() == ExplorerMenuStatus.READY;
+    }
+
+    public ExplorerMenuStatus contextMenuStatusForCurrentUser() {
+        return contextMenuStatus("Software\\Classes");
+    }
+
+    // Allow Windows integration tests to check an isolated HKCU registry tree.
+    ExplorerMenuStatus contextMenuStatus(String classesPrefix) {
+        if (!registryTool.isWindows()) {
+            return ExplorerMenuStatus.NOT_INSTALLED;
+        }
+        int present = 0;
+        for (String key : contextMenuRegistryKeys()) {
+            String resolvedKey = classesPrefix + key.substring("Software\\Classes".length());
+            if (registryTool.queryValue(
+                    WindowsRegistryTool.ROOT_CURRENT_USER, resolvedKey, "MUIVerb"
+            ).filter("UniZip"::equals).isPresent()) {
+                present++;
+            }
+        }
+        if (present == 0) {
+            return ExplorerMenuStatus.NOT_INSTALLED;
+        }
+        if (present != contextMenuRegistryKeys().size()) {
+            return ExplorerMenuStatus.REPAIR_REQUIRED;
+        }
+        try {
+            boolean healthy = commandMatches(classesPrefix,
+                    "SystemFileAssociations\\.zip\\shell\\UniZip\\shell\\open\\command",
+                    buildOpenCommand())
+                    && commandMatches(classesPrefix,
+                    "SystemFileAssociations\\.zip\\shell\\UniZip\\shell\\test\\command",
+                    buildCommand("--test", "%1"))
+                    && commandMatches(classesPrefix,
+                    "*\\shell\\UniZip.Compress\\shell\\add_to_archive\\command",
+                    buildCommand("--add-to-archive", "%1"))
+                    && commandMatches(classesPrefix,
+                    "SystemFileAssociations\\.sha256\\shell\\UniZip.Verify\\command",
+                    buildCommand("--verify-checksum", "%1"));
+            return healthy ? ExplorerMenuStatus.READY : ExplorerMenuStatus.REPAIR_REQUIRED;
+        } catch (Exception exception) {
+            return ExplorerMenuStatus.REPAIR_REQUIRED;
+        }
+    }
+
+    private boolean commandMatches(String classesPrefix, String relativePath, String expected) {
+        return registryTool.queryDefaultValue(WindowsRegistryTool.ROOT_CURRENT_USER,
+                classesPrefix + "\\" + relativePath).filter(expected::equals).isPresent();
     }
 
     // Package-private so contract tests can inspect the exact, import-ready registry script.

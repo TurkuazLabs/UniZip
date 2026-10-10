@@ -66,6 +66,23 @@ final class FileAssociationRegistryRoundTripTest {
                     archive + "\\shell\\test\\command").orElseThrow();
             assertTrue(zipTestCommand.contains("--test"));
             assertTrue(zipTestCommand.contains("%1"));
+            assertEquals(FileAssociationService.ExplorerMenuStatus.READY,
+                    service.contextMenuStatus(subtree));
+
+            // A moved portable EXE leaves the menu present but pointing to a stale command.
+            registry.addDefaultValue(WindowsRegistryTool.ROOT_CURRENT_USER,
+                    archive + "\\shell\\test\\command", "stale-EXE --test \"%1\"");
+            assertEquals(FileAssociationService.ExplorerMenuStatus.REPAIR_REQUIRED,
+                    service.contextMenuStatus(subtree));
+
+            registry.importRegistryScript(install);
+            assertEquals(FileAssociationService.ExplorerMenuStatus.READY,
+                    service.contextMenuStatus(subtree));
+
+            // A partial installation is not healthy, but can still be removed.
+            registry.deleteTreeIfExists(WindowsRegistryTool.ROOT_CURRENT_USER, verifyKey);
+            assertEquals(FileAssociationService.ExplorerMenuStatus.REPAIR_REQUIRED,
+                    service.contextMenuStatus(subtree));
 
             registry.importRegistryScript(remove);
             assertTrue(registry.queryValue(
@@ -77,6 +94,8 @@ final class FileAssociationRegistryRoundTripTest {
             assertTrue(registry.queryValue(
                     WindowsRegistryTool.ROOT_CURRENT_USER,
                     verifyKey, "MUIVerb").isEmpty());
+            assertEquals(FileAssociationService.ExplorerMenuStatus.NOT_INSTALLED,
+                    service.contextMenuStatus(subtree));
         } finally {
             // Clean all owned sandbox state, even if assertions or import fail.
             registry.deleteTreeIfExists(WindowsRegistryTool.ROOT_CURRENT_USER, subtree);

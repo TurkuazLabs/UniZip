@@ -85,6 +85,10 @@ public final class SettingsService {
         return fileAssociationService.contextMenuInstalledForCurrentUser();
     }
 
+    public FileAssociationService.ExplorerMenuStatus explorerMenuStatus() {
+        return fileAssociationService.contextMenuStatusForCurrentUser();
+    }
+
     public boolean fileAssociationSupported() {
         return fileAssociationService.isWindows();
     }
