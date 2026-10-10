@@ -74,6 +74,81 @@ public final class ChecksumTool {
         return writeSidecar(input, ".crc32", this::crc32);
     }
 
+    public record ChecksumVerificationResult(Path file, String algorithm, boolean matches) {
+    }
+
+    /**
+     * Verify one UniZip/GNU-style one-line checksum file.
+     * The referenced filename MUST be a basename in the checksum's own folder;
+     * absolute paths, traversal, symbolic links and unbounded manifests fail closed.
+     */
+    public ChecksumVerificationResult verifySidecar(Path input) throws IOException {
+        if (input == null) {
+            throw new IOException("Dogrulanacak checksum dosyasi secilmedi");
+        }
+        Path sidecar = input.toAbsolutePath().normalize();
+        if (Files.isSymbolicLink(sidecar)
+                || !Files.isRegularFile(sidecar, LinkOption.NOFOLLOW_LINKS)
+                || Files.size(sidecar) > 8192) {
+            throw new IOException("Gecersiz veya cok buyuk checksum dosyasi");
+        }
+        String name = sidecar.getFileName().toString().toLowerCase(Locale.ROOT);
+        int hexLength;
+        String algorithm;
+        HashFunction calculator;
+        if (name.endsWith(".sha256")) {
+            hexLength = 64;
+            algorithm = "SHA-256";
+            calculator = this::sha256;
+        } else if (name.endsWith(".sha512")) {
+            hexLength = 128;
+            algorithm = "SHA-512";
+            calculator = this::sha512;
+        } else if (name.endsWith(".crc32")) {
+            hexLength = 8;
+            algorithm = "CRC-32";
+            calculator = this::crc32;
+        } else {
+            throw new IOException("Desteklenmeyen checksum dosya uzantisi");
+        }
+
+        String manifest = Files.readString(sidecar, StandardCharsets.UTF_8);
+        // Accept one optional line ending, but never multiple entries or embedded newlines.
+        if (manifest.endsWith("\r\n")) {
+            manifest = manifest.substring(0, manifest.length() - 2);
+        } else if (manifest.endsWith("\n")) {
+            manifest = manifest.substring(0, manifest.length() - 1);
+        }
+        if (manifest.length() < hexLength + 3
+                || manifest.charAt(hexLength) != ' '
+                || manifest.charAt(hexLength + 1) != ' '
+                || manifest.indexOf('\r') >= 0
+                || manifest.indexOf('\n') >= 0) {
+            throw new IOException("Checksum dosyasi tek bir hash ve dosya adi icermeli");
+        }
+        String expected = manifest.substring(0, hexLength);
+        if (!expected.matches("(?i)[0-9a-f]{" + hexLength + "}")) {
+            throw new IOException("Checksum hexadecimal degeri gecersiz");
+        }
+        String basename = manifest.substring(hexLength + 2);
+        if (basename.isEmpty() || basename.equals(".") || basename.equals("..")
+                || basename.indexOf('/') >= 0 || basename.indexOf('\\') >= 0
+                || basename.indexOf(':') >= 0 || basename.indexOf('\0') >= 0
+                || basename.length() > 255) {
+            throw new IOException("Checksum dosya yolu guvenli degil");
+        }
+        Path target = sidecar.getParent().resolve(basename);
+        if (Files.isSymbolicLink(target)
+                || !Files.isRegularFile(target, LinkOption.NOFOLLOW_LINKS)) {
+            throw new IOException("Checksum hedef dosyasi bulunamadi veya guvenli degil");
+        }
+        String actual = calculator.calculate(target);
+        boolean matches = MessageDigest.isEqual(
+                expected.toLowerCase(Locale.ROOT).getBytes(StandardCharsets.US_ASCII),
+                actual.getBytes(StandardCharsets.US_ASCII));
+        return new ChecksumVerificationResult(target, algorithm, matches);
+    }
+
     private Path writeSidecar(Path input, String suffix, HashFunction calculator) throws IOException {
         if (input == null) {
             throw new IOException("Hash yalniz normal dosyalar icin desteklenir");

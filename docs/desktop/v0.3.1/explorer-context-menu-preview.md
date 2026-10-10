@@ -60,7 +60,7 @@ remain separate gated changes.
 ## Avoid duplicate UniZip menus
 
 Windows supports a static menu condition through Advanced Query Syntax. The generic
-`*\\shell\\UniZip.Compress` now has `AppliesTo = NOT System.FileExtension:=.zip`:
+`*\\shell\\UniZip.Compress` now has `AppliesTo filters out .zip/.sha256/.sha512/.crc32`:
 a ZIP gets the archive-only UniZip flyout (open/extract/test/hash), while other
 files get create ZIP / checksum actions. Folder compression remains unchanged.
 
@@ -69,6 +69,25 @@ If the user's saved preference enables right-click menus, it installs/repairs th
 same current-user Explorer verbs. The old UniZip-only ProgID/wildcard keys are cleaned
 as part of migration; other vendors' associations are not modified by menu registration.
 Windows 10/11 GUI visibility still needs manual acceptance.
+
+## One-file checksum verification (V1.2 preview)
+
+- Right-click a generated `.sha256`, `.sha512` or `.crc32` checksum file:
+  **UniZip > Verify checksum**. Classic menu uses the existing Pro/Community EXE
+  and shared `--verify-checksum` shell command, including the supported
+  noninteractive `--batch` entrypoint. A mismatch returns a failed result,
+  not a misleading PASS.
+- Each checksum file stores one lowercase hexadecimal hash followed by
+  exactly two spaces and the original filename in UTF-8. Only that same-folder
+  basename is accepted; absolute paths, traversal, symlinks, multiline/large
+  manifests and invalid hex are rejected before accessing the target.
+- This verifies that bytes match the chosen checksum file, **not** that a file
+  came from a trusted publisher. CRC-32 is not cryptographically secure.
+- The generic compression flyout excludes .zip and checksum files, so one
+  appropriate UniZip menu appears per supported selection. Multi-select is
+  intentionally not supported until the native handler has safe IPC.
+- The true Windows 11 primary menu, MSI install/upgrade, and GUI right-click
+  visual acceptance remain separate release gates.
 
 ## Acceptance tests
 

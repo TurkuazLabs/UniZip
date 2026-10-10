@@ -74,6 +74,68 @@ class ChecksumSidecarTest {
     }
 
     @Test
+    void verifiesSha256Sha512AndCrc32SidecarsWithoutChangingInputs() throws Exception {
+        Path input = temp.resolve("Ürün test file.txt");
+        Files.writeString(input, "abc", StandardCharsets.UTF_8);
+        ChecksumTool tool = new ChecksumTool();
+        for (Path manifest : new Path[]{
+                tool.writeSha256Sidecar(input),
+                tool.writeSha512Sidecar(input),
+                tool.writeCrc32Sidecar(input)
+        }) {
+            assertTrue(tool.verifySidecar(manifest).matches());
+            assertEquals(input, tool.verifySidecar(manifest).file());
+        }
+        Files.writeString(input, "changed", StandardCharsets.UTF_8);
+        assertFalse(tool.verifySidecar(temp.resolve("Ürün test file.txt.sha256")).matches());
+        assertFalse(tool.verifySidecar(temp.resolve("Ürün test file.txt.sha512")).matches());
+        assertFalse(tool.verifySidecar(temp.resolve("Ürün test file.txt.crc32")).matches());
+        assertEquals("changed", Files.readString(input));
+    }
+
+    @Test
+    void verificationRejectsTraversalAbsolutePathsMalformedAndOversizedManifests() throws Exception {
+        ChecksumTool tool = new ChecksumTool();
+        Path sidecar = temp.resolve("bad.sha256");
+        String hash = "0".repeat(64);
+        for (String filename : new String[]{
+                "../outside.txt", "..\\outside.txt", "C:\\private.txt",
+                "path/to.txt", "..", ""
+        }) {
+            Files.writeString(sidecar, hash + "  " + filename + "\n");
+            assertThrows(java.io.IOException.class, () -> tool.verifySidecar(sidecar), filename);
+        }
+        Files.writeString(sidecar, hash + "  one.txt\n" + hash + "  two.txt\n");
+        assertThrows(java.io.IOException.class, () -> tool.verifySidecar(sidecar));
+        Files.writeString(sidecar, "not hex".repeat(1200));
+        assertThrows(java.io.IOException.class, () -> tool.verifySidecar(sidecar));
+
+        Path other = temp.resolve("bad.unknown");
+        Files.writeString(other, "abc");
+        assertThrows(java.io.IOException.class, () -> tool.verifySidecar(other));
+    }
+
+    @Test
+    void verificationRejectsSymbolicManifestAndSymbolicTarget() throws Exception {
+        Path input = temp.resolve("target.txt");
+        Files.writeString(input, "abc");
+        ChecksumTool tool = new ChecksumTool();
+        Path sidecar = tool.writeSha256Sidecar(input);
+        Path alias = temp.resolve("alias.sha256");
+        try {
+            Files.createSymbolicLink(alias, sidecar);
+        } catch (java.io.IOException | UnsupportedOperationException | SecurityException error) {
+            org.junit.jupiter.api.Assumptions.assumeTrue(false, "No symlink permission on test host");
+        }
+        assertThrows(java.io.IOException.class, () -> tool.verifySidecar(alias));
+        Path fake = temp.resolve("fake.txt");
+        Files.createSymbolicLink(fake, input);
+        Path fakeSidecar = temp.resolve("fake.txt.sha256");
+        Files.writeString(fakeSidecar, tool.sha256(input) + "  fake.txt\n");
+        assertThrows(java.io.IOException.class, () -> tool.verifySidecar(fakeSidecar));
+    }
+
+    @Test
     void rejectsDirectoriesAndMissingFiles() throws Exception {
         ChecksumTool tool = new ChecksumTool();
         assertThrows(java.io.IOException.class, () -> tool.writeSha256Sidecar(temp));

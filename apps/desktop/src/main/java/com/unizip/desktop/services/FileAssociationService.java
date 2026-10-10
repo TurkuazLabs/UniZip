@@ -157,6 +157,17 @@ public final class FileAssociationService {
         addSubCommand(script, root, archiveKey, "hash_crc32", "CRC-32 olustur",
                 icon, buildCommand("--hash-crc32", "%1"));
 
+        // Dedicated checksum-file verbs avoid treating untrusted manifests as archives.
+        for (String extension : List.of(".sha256", ".sha512", ".crc32")) {
+            String verifyKey = "Software\\Classes\\SystemFileAssociations\\" + extension
+                    + "\\shell\\UniZip.Verify";
+            addString(script, root, verifyKey, "MUIVerb", "UniZip");
+            addString(script, root, verifyKey, "Icon", icon);
+            addString(script, root, verifyKey, "MultiSelectModel", "Single");
+            addDefault(script, root, verifyKey + "\\command",
+                    buildCommand("--verify-checksum", "%1"));
+        }
+
         // Static Windows verbs receive one selected path via %1. Multi-select requires a
         // separate IExplorerCommand implementation; do not claim multi-select support.
         String addCommand = buildCommand("--add-to-archive", "%1");
@@ -166,7 +177,10 @@ public final class FileAssociationService {
         // file menu. Uses Windows Shell's documented fast-property AQS filter.
         addString(script, root,
                 "Software\\Classes\\*\\shell\\UniZip.Compress",
-                "AppliesTo", "NOT System.FileExtension:=.zip");
+                "AppliesTo", "NOT System.FileExtension:=.zip"
+                        + " AND NOT System.FileExtension:=.sha256"
+                        + " AND NOT System.FileExtension:=.sha512"
+                        + " AND NOT System.FileExtension:=.crc32");
         addSubCommand(script, root, "Software\\Classes\\*\\shell\\UniZip.Compress",
                 "hash_sha256", "SHA-256 olustur", icon,
                 buildCommand("--hash-sha256", "%1"));
@@ -185,7 +199,10 @@ public final class FileAssociationService {
         return List.of(
                 "Software\\Classes\\SystemFileAssociations\\.zip\\shell\\UniZip",
                 "Software\\Classes\\*\\shell\\UniZip.Compress",
-                "Software\\Classes\\Directory\\shell\\UniZip.Compress"
+                "Software\\Classes\\Directory\\shell\\UniZip.Compress",
+                "Software\\Classes\\SystemFileAssociations\\.sha256\\shell\\UniZip.Verify",
+                "Software\\Classes\\SystemFileAssociations\\.sha512\\shell\\UniZip.Verify",
+                "Software\\Classes\\SystemFileAssociations\\.crc32\\shell\\UniZip.Verify"
         );
     }
 

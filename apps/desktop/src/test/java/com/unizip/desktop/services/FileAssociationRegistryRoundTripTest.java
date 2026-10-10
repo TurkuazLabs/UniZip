@@ -47,9 +47,20 @@ final class FileAssociationRegistryRoundTripTest {
             assertEquals("UniZip",
                     registry.queryValue(WindowsRegistryTool.ROOT_CURRENT_USER,
                             archive, "MUIVerb").orElseThrow());
-            assertEquals("NOT System.FileExtension:=.zip",
+            assertEquals("NOT System.FileExtension:=.zip"
+                            + " AND NOT System.FileExtension:=.sha256"
+                            + " AND NOT System.FileExtension:=.sha512"
+                            + " AND NOT System.FileExtension:=.crc32",
                     registry.queryValue(WindowsRegistryTool.ROOT_CURRENT_USER,
                             regular, "AppliesTo").orElseThrow());
+            String verifyKey = subtree
+                    + "\\SystemFileAssociations\\.sha256\\shell\\UniZip.Verify";
+            assertEquals("UniZip",
+                    registry.queryValue(WindowsRegistryTool.ROOT_CURRENT_USER,
+                            verifyKey, "MUIVerb").orElseThrow());
+            assertTrue(registry.queryDefaultValue(
+                    WindowsRegistryTool.ROOT_CURRENT_USER,
+                    verifyKey + "\\command").orElseThrow().contains("--verify-checksum"));
             String zipTestCommand = registry.queryDefaultValue(
                     WindowsRegistryTool.ROOT_CURRENT_USER,
                     archive + "\\shell\\test\\command").orElseThrow();
@@ -63,6 +74,9 @@ final class FileAssociationRegistryRoundTripTest {
             assertTrue(registry.queryValue(
                     WindowsRegistryTool.ROOT_CURRENT_USER,
                     regular, "MUIVerb").isEmpty());
+            assertTrue(registry.queryValue(
+                    WindowsRegistryTool.ROOT_CURRENT_USER,
+                    verifyKey, "MUIVerb").isEmpty());
         } finally {
             // Clean all owned sandbox state, even if assertions or import fail.
             registry.deleteTreeIfExists(WindowsRegistryTool.ROOT_CURRENT_USER, subtree);

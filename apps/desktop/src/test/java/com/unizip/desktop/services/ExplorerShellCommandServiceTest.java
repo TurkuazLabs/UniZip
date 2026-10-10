@@ -24,7 +24,7 @@ final class ExplorerShellCommandServiceTest {
         for (String verb : new String[] {
                 "--extract-here", "--extract-to-folder", "--test",
                 "--hash-sha256", "--hash-sha512", "--hash-crc32",
-                "--add-to-archive"}) {
+                "--verify-checksum", "--add-to-archive"}) {
             assertTrue(ExplorerShellCommandService.supports(verb), verb);
         }
         assertFalse(ExplorerShellCommandService.supports("--erase"));

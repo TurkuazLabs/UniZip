@@ -36,7 +36,10 @@ class FileAssociationContextMenuTest {
     void zipSelectionUsesOnlyArchiveMenuAndGenericFilesStillHaveCompression() throws Exception {
         String script = service.buildContextMenuScript();
         assertTrue(script.contains(
-                "\"AppliesTo\"=\"NOT System.FileExtension:=.zip\""));
+                "\"AppliesTo\"=\"NOT System.FileExtension:=.zip"
+                + " AND NOT System.FileExtension:=.sha256"
+                + " AND NOT System.FileExtension:=.sha512"
+                + " AND NOT System.FileExtension:=.crc32\""));
         assertTrue(script.contains(
                 "Software\\Classes\\SystemFileAssociations\\.zip\\shell\\UniZip"));
         assertTrue(script.contains(
@@ -93,6 +96,7 @@ class FileAssociationContextMenuTest {
         assertTrue(script.contains("--hash-sha256"));
         assertTrue(script.contains("--hash-sha512"));
         assertTrue(script.contains("--hash-crc32"));
+        assertTrue(script.contains("--verify-checksum"));
         assertTrue(script.contains("--add-to-archive"));
         assertTrue(script.contains("\"MUIVerb\"=\"UniZip\""));
         assertFalse(script.contains("--encrypt"));
