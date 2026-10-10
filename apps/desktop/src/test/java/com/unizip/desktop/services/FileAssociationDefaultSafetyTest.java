@@ -43,7 +43,11 @@ final class FileAssociationDefaultSafetyTest {
                     "\"C:\\Tools\\UniZip Pro.exe\" \"%1\"",
                     "C:\\Tools\\UniZip Pro.exe,0",
                     false, false).replace(actualRoot, isolatedRoot);
-            assertFalse(script.contains(actualRoot));
+            // The sandbox itself lives under HKCU\\Software, so assert the real
+            // top-level shell and capabilities locations are never referenced.
+            assertFalse(script.contains("HKEY_CURRENT_USER\\Software\\Classes\\"));
+            assertFalse(script.contains("HKEY_CURRENT_USER\\Software\\RegisteredApplications]"));
+            assertFalse(script.contains("HKEY_CURRENT_USER\\Software\\UniZip\\Capabilities]"));
             assertFalse(script.contains("HKEY_LOCAL_MACHINE"));
             assertFalse(script.contains("UserChoice"));
             assertFalse(script.contains("[-HKEY_CURRENT_USER"));
