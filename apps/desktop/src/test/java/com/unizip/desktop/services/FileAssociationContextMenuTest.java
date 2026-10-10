@@ -50,8 +50,12 @@ class FileAssociationContextMenuTest {
                 java.util.List.of("zip", "7z"),
                 "\"C:\\Apps\\UniZip Pro.exe\" \"%1\"",
                 "C:\\Apps\\UniZip Pro.exe,0", true, true);
-        assertFalse(script.contains("shell\\UniZip.Compress"));
-        assertFalse(script.contains("shell\\UniZip]"));
+        // Deleting legacy keys is expected. Only NEW verb creation is forbidden.
+        String additionsOnly = script.lines()
+                .filter(line -> !line.startsWith("[-"))
+                .collect(java.util.stream.Collectors.joining("\n"));
+        assertFalse(additionsOnly.contains("shell\\UniZip.Compress"));
+        assertFalse(additionsOnly.contains("shell\\UniZip]"));
         assertFalse(script.contains("\"AppliesTo\""));
         assertFalse(script.contains("SystemFileAssociations"));
         assertTrue(script.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\*\\shell\\UniZip]"));
