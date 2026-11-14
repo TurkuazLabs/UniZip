@@ -1,7 +1,7 @@
 # Dosya Yolu: REPO_ROOT/.github/workflows/turkuaz-installer-pilot.yml
 # Amac: UniZip 0.3.1 icin self-contained TurkuazInstaller Community pilot artifact'i uretmek
 # Modul - GitHub Actions YAML
-# Version: 0.1.0
+# Version: 0.1.1
 # Aciklama: Mevcut portable release'i degistirmeden JRE dahil Setup EXE ve kurulum/kaldirma smoke kaniti uretir
 # Bagimli Oldugu Katman: Tool | Config
 
@@ -58,7 +58,7 @@ jobs:
           Copy-Item -Path 'apps/desktop/target/lib/*.jar' -Destination $input
           & jpackage --type app-image --dest $destination --name UniZip `
             --input $input --main-jar UniZip.jar --main-class com.unizip.desktop.MainApp `
-            --app-version $version --vendor TurkuazLabs --license-file LICENSE `
+            --app-version $version --vendor TurkuazLabs `
             --description 'UniZip Community Desktop'
           if ($LASTEXITCODE -ne 0) { throw 'jpackage app-image build failed.' }
           if (-not (Test-Path -LiteralPath (Join-Path $destination 'UniZip/UniZip.exe') -PathType Leaf)) {
