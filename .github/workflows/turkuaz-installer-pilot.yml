@@ -1,7 +1,7 @@
 # Dosya Yolu: REPO_ROOT/.github/workflows/turkuaz-installer-pilot.yml
 # Amac: UniZip 0.3.1 icin self-contained TurkuazInstaller Community pilot artifact'i uretmek
 # Modul - GitHub Actions YAML
-# Version: 0.1.1
+# Version: 0.1.2
 # Aciklama: Mevcut portable release'i degistirmeden JRE dahil Setup EXE ve kurulum/kaldirma smoke kaniti uretir
 # Bagimli Oldugu Katman: Tool | Config
 
@@ -72,7 +72,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: TurkuazLabs/TurkuazInstaller
-          ref: 88dc833d906b83ede601c04df2affbe1ac8c1839
+          ref: 35c6ed70740e9a850a839950a300788651b7be8a
           path: _turkuaz-installer
           persist-credentials: false
 
@@ -87,7 +87,7 @@ jobs:
       - name: Upload unsigned pilot artifact
         uses: actions/upload-artifact@v4
         with:
-          name: UniZip-0.3.1-TurkuazInstaller-0.2.20-PILOT
+          name: UniZip-0.3.1-TurkuazInstaller-0.2.21-PILOT
           path: dist-turkuaz-installer/*
           if-no-files-found: error
           retention-days: 14
