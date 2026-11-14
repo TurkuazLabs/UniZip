@@ -1,0 +1,93 @@
+# Dosya Yolu: REPO_ROOT/.github/workflows/turkuaz-installer-pilot.yml
+# Amac: UniZip 0.3.1 icin self-contained TurkuazInstaller Community pilot artifact'i uretmek
+# Modul - GitHub Actions YAML
+# Version: 0.1.0
+# Aciklama: Mevcut portable release'i degistirmeden JRE dahil Setup EXE ve kurulum/kaldirma smoke kaniti uretir
+# Bagimli Oldugu Katman: Tool | Config
+
+name: UniZip TurkuazInstaller Pilot
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "apps/desktop/**"
+      - "pom.xml"
+      - "version.txt"
+      - "scripts/build_turkuaz_installer_pilot.ps1"
+      - ".github/workflows/turkuaz-installer-pilot.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: unizip-turkuaz-installer-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-pilot:
+    name: Build and smoke UniZip pilot setup
+    runs-on: windows-latest
+    timeout-minutes: 75
+
+    steps:
+      - name: Checkout UniZip
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build and test UniZip Desktop
+        run: mvn -B clean verify dependency:copy-dependencies -pl apps/desktop -DincludeScope=runtime -DoutputDirectory=target/lib
+
+      - name: Build self-contained UniZip app image
+        shell: pwsh
+        run: |
+          $version = (Get-Content -LiteralPath 'version.txt' -Raw).Trim()
+          if ($version -ne '0.3.1') { throw "Unexpected UniZip pilot version: $version" }
+          $input = Join-Path $env:RUNNER_TEMP 'unizip-jpackage-input'
+          $destination = Join-Path $env:RUNNER_TEMP 'unizip-app-image'
+          New-Item -ItemType Directory -Path $input | Out-Null
+          Copy-Item -LiteralPath "apps/desktop/target/unizip-desktop-$version.jar" -Destination (Join-Path $input 'UniZip.jar')
+          Copy-Item -Path 'apps/desktop/target/lib/*.jar' -Destination $input
+          & jpackage --type app-image --dest $destination --name UniZip `
+            --input $input --main-jar UniZip.jar --main-class com.unizip.desktop.MainApp `
+            --app-version $version --vendor TurkuazLabs --license-file LICENSE `
+            --description 'UniZip Community Desktop'
+          if ($LASTEXITCODE -ne 0) { throw 'jpackage app-image build failed.' }
+          if (-not (Test-Path -LiteralPath (Join-Path $destination 'UniZip/UniZip.exe') -PathType Leaf)) {
+            throw 'Self-contained UniZip launcher is missing.'
+          }
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Checkout pinned TurkuazInstaller Community
+        uses: actions/checkout@v4
+        with:
+          repository: TurkuazLabs/TurkuazInstaller
+          ref: 88dc833d906b83ede601c04df2affbe1ac8c1839
+          path: _turkuaz-installer
+          persist-credentials: false
+
+      - name: Build and smoke TurkuazInstaller pilot
+        shell: pwsh
+        run: |
+          & ./scripts/build_turkuaz_installer_pilot.ps1 `
+            -InstallerCheckout '_turkuaz-installer' `
+            -PayloadDirectory (Join-Path $env:RUNNER_TEMP 'unizip-app-image/UniZip') `
+            -OutputDirectory 'dist-turkuaz-installer'
+
+      - name: Upload unsigned pilot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UniZip-0.3.1-TurkuazInstaller-0.2.20-PILOT
+          path: dist-turkuaz-installer/*
+          if-no-files-found: error
+          retention-days: 14
