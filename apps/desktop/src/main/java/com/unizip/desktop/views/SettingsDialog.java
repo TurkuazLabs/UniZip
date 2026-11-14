@@ -13,6 +13,7 @@ import com.unizip.desktop.models.FileAssociationScope;
 import com.unizip.desktop.models.FileAssociationStatusModel;
 import com.unizip.desktop.models.LanguageOptionModel;
 import com.unizip.desktop.models.ThemeOptionModel;
+import com.unizip.desktop.services.FileAssociationService;
 import com.unizip.desktop.services.LanguageService;
 import com.unizip.desktop.services.SettingsService;
 import com.unizip.desktop.services.ThemeService;
@@ -38,6 +39,7 @@ import javax.swing.JTextField;
 import javax.swing.JTable;
 import javax.swing.Icon;
 import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -141,7 +143,85 @@ public final class SettingsDialog extends JDialog {
         addFullWidthRow(panel, 3, showSystemMenuCheckBox);
         addFullWidthRow(panel, 4, useLargeMemoryPagesCheckBox);
         addFullWidthRow(panel, 5, mutedLabel(languageService.text("settings.context_menu_note")));
+        JPanel explorerButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, themeService.spacing("sm"), 0));
+        explorerButtons.setOpaque(false);
+        JButton installButton = new JButton(languageService.text("button.explorer_menu_install"));
+        JButton removeButton = new JButton(languageService.text("button.explorer_menu_remove"));
+        boolean supported = settingsService.fileAssociationSupported();
+        FileAssociationService.ExplorerMenuStatus status = supported
+                ? settingsService.explorerMenuStatus()
+                : FileAssociationService.ExplorerMenuStatus.NOT_INSTALLED;
+        // Partial menu registrations must remain uninstallable.
+        installButton.setEnabled(supported);
+        removeButton.setEnabled(supported
+                && status != FileAssociationService.ExplorerMenuStatus.NOT_INSTALLED);
+        JLabel statusLabel = mutedLabel(explorerMenuStatusText(status));
+        installButton.addActionListener(event ->
+                updateExplorerMenu(true, installButton, removeButton, statusLabel));
+        removeButton.addActionListener(event ->
+                updateExplorerMenu(false, installButton, removeButton, statusLabel));
+        explorerButtons.add(installButton);
+        explorerButtons.add(removeButton);
+        addFullWidthRow(panel, 6, explorerButtons);
+        addFullWidthRow(panel, 7, mutedLabel(languageService.text("settings.explorer_menu_info")));
+        addFullWidthRow(panel, 8, statusLabel);
         return panel;
+    }
+
+    private String explorerMenuStatusText(FileAssociationService.ExplorerMenuStatus status) {
+        return switch (status) {
+            case READY -> languageService.text("settings.explorer_status_ready");
+            case REPAIR_REQUIRED -> languageService.text("settings.explorer_status_repair");
+            case NOT_INSTALLED -> languageService.text("settings.explorer_status_absent");
+        };
+    }
+
+    private void updateExplorerMenu(boolean install, JButton installButton,
+                                    JButton removeButton, JLabel statusLabel) {
+        installButton.setEnabled(false);
+        removeButton.setEnabled(false);
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                if (install) {
+                    settingsService.installExplorerContextMenu();
+                } else {
+                    settingsService.removeExplorerContextMenu();
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    JOptionPane.showMessageDialog(
+                            SettingsDialog.this,
+                            languageService.text(install
+                                    ? "message.explorer_menu_installed"
+                                    : "message.explorer_menu_removed"),
+                            languageService.text("dialog.settings_title"),
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                } catch (Exception exception) {
+                    JOptionPane.showMessageDialog(
+                            SettingsDialog.this,
+                            languageService.text("error.association_failed") + ": " + exception.getMessage(),
+                            languageService.text("dialog.settings_title"),
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                } finally {
+                    boolean supported = settingsService.fileAssociationSupported();
+                    FileAssociationService.ExplorerMenuStatus status = supported
+                            ? settingsService.explorerMenuStatus()
+                            : FileAssociationService.ExplorerMenuStatus.NOT_INSTALLED;
+                    statusLabel.setText(explorerMenuStatusText(status));
+                    installButton.setEnabled(supported);
+                    removeButton.setEnabled(supported
+                            && status != FileAssociationService.ExplorerMenuStatus.NOT_INSTALLED);
+                }
+            }
+        }.execute();
     }
 
     private JPanel buildUniZipTab() {
