@@ -1,7 +1,7 @@
 # Dosya Yolu: REPO_ROOT/docs/TURKUAZ_INSTALLER_PILOT.md
 # Amac: UniZip icin TurkuazInstaller Community pilot sinirlarini ve dogrulamasini tanimlamak
 # Modul - Documentation Markdown
-# Version: 0.1.2
+# Version: 0.1.3
 # Aciklama: Sabit surumler, JRE dahil CI artifact'i, smoke kapsami ve production olmayan dagitim durumu
 # Bagimli Oldugu Katman: Documentation | Tool | Config
 
@@ -10,7 +10,7 @@
 Bu pilot UniZip Community Desktop `0.3.1` uygulamasini Java 21 runtime
 dahil self-contained `jpackage` app-image olarak hazirlar ve
 TurkuazInstaller Community `0.2.22`, kaynak revizyonu
-`5454874e64ed2d78622755032b12c0d32b17b244` ile paketler.
+`536354021fa74cb36a139445c8007af785af5096` ile paketler.
 
 `.github/workflows/turkuaz-installer-pilot.yml` yalniz manuel veya PR
 dogrulamasinda calisir. Mevcut portable ZIP release akisini degistirmez,
