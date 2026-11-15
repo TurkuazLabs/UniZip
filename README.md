@@ -1,7 +1,7 @@
 # 📄 Dosya Yolu: README.md
 # 📌 Amac: UniZip Community monorepo yapisini, edition sinirlarini ve gelistirme komutlarini aciklamak
 # 📌 Modul - FileType
-# Version: 0.3.3
+# Version: 0.3.4
 # Aciklama: Desktop public runtime bootstrap, OpenCart entegrasyonu, Community lisansi ve Pro ayrimini tanimlar
 Bagimli Oldugu Katman: Controller | Service | Repo/Model | Tool | View | Language | Config
 
@@ -94,7 +94,7 @@ scripts/build-all.sh
 ## TurkuazInstaller Community Pilotu
 
 UniZip Desktop `0.3.1`, mevcut portable ZIP yoluna dokunmadan Java 21
-runtime dahil self-contained bir TurkuazInstaller Community `0.2.21`
+runtime dahil self-contained bir TurkuazInstaller Community `0.2.22`
 Windows pilot artifact'i olarak da paketlenir. Pilot sabit kaynak
 revizyonu, gercek kurulum/kaldirma smoke testi ve SHA-256 metadata uretir;
 imzasizdir ve production release degildir.
