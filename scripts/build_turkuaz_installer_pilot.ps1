@@ -1,7 +1,7 @@
 # Dosya Yolu: REPO_ROOT/scripts/build_turkuaz_installer_pilot.ps1
 # Amac: Self-contained UniZip app-image'i sabit TurkuazInstaller Community surumuyle pilot Setup EXE'ye paketlemek
 # Modul - PowerShell Tool
-# Version: 0.1.3
+# Version: 0.1.4
 # Aciklama: Imzasiz pilot paketi atomik uretir ve gecici hedefte kurulum/kaldirma smoke testi yapar
 # Bagimli Oldugu Katman: Tool | Config
 
@@ -20,8 +20,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$installerRevision = '536354021fa74cb36a139445c8007af785af5096'
-$installerVersion = '0.2.22'
+$installerRevision = '987603a6784d16e5b2f7d1b64b248c03582d199c'
+$installerVersion = '0.2.23'
 $applicationVersion = '0.3.1'
 $packageId = 'unizip'
 $entryPoint = 'UniZip.exe'

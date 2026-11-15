@@ -1,7 +1,7 @@
 # Dosya Yolu: REPO_ROOT/docs/TURKUAZ_INSTALLER_PILOT.md
 # Amac: UniZip icin TurkuazInstaller Community pilot sinirlarini ve dogrulamasini tanimlamak
 # Modul - Documentation Markdown
-# Version: 0.1.3
+# Version: 0.1.4
 # Aciklama: Sabit surumler, JRE dahil CI artifact'i, smoke kapsami ve production olmayan dagitim durumu
 # Bagimli Oldugu Katman: Documentation | Tool | Config
 
@@ -9,8 +9,8 @@
 
 Bu pilot UniZip Community Desktop `0.3.1` uygulamasini Java 21 runtime
 dahil self-contained `jpackage` app-image olarak hazirlar ve
-TurkuazInstaller Community `0.2.22`, kaynak revizyonu
-`536354021fa74cb36a139445c8007af785af5096` ile paketler.
+TurkuazInstaller Community `0.2.23`, kaynak revizyonu
+`987603a6784d16e5b2f7d1b64b248c03582d199c` ile paketler.
 
 `.github/workflows/turkuaz-installer-pilot.yml` yalniz manuel veya PR
 dogrulamasinda calisir. Mevcut portable ZIP release akisini degistirmez,
@@ -27,10 +27,10 @@ tag olusturmaz ve GitHub Release yayinlamaz.
 - `uninstall-local` ile yalniz yonetilen payload'in kaldirilmasi.
 - Setup, paket ve metadata SHA-256 artifact'leri.
 
-TurkuazInstaller `0.2.22` sihirbazi uygulama adini `UniZip.exe` giris
+TurkuazInstaller `0.2.23` sihirbazi uygulama adini `UniZip.exe` giris
 noktasindan `UniZip` olarak turetir. Baslat menusunde `UniZip` ve `Kaldir`
-kisayollarini zorunlu olusturur, masaustu kisayolunu kullaniciya birakir ve
-kaldirmada kendi kisayollarini guvenli bicimde temizler.
+ile masaustunde `UniZip` kisayollarini zorunlu olusturur; kaldirmada kendi
+kisayollarini guvenli bicimde temizler.
 
 ## Sinirlar
 
