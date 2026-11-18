@@ -76,11 +76,20 @@ jobs:
           path: turkuaz-installer-source
           persist-credentials: false
 
-      - name: Build TurkuazInstaller engine
+      # GUI-subsystem EXE is only an embedding stub. A console-subsystem
+      # binary must run build-package/build-native-setup so pwsh can await exit.
+      - name: Build TurkuazInstaller GUI stub and console CLI
         shell: pwsh
         run: |
-          cargo build --locked --manifest-path turkuaz-installer-source/rust/Cargo.toml -p turkuaz-installer-cli --release --bin turkuaz-installer --features setup-authoring-gui
-          if ($LASTEXITCODE -ne 0) { throw 'TurkuazInstaller Rust build failed.' }
+          $manifest = 'turkuaz-installer-source/rust/Cargo.toml'
+          $bin = 'turkuaz-installer-source/rust/target/release/turkuaz-installer.exe'
+          $stub = 'turkuaz-installer-source/rust/target/release/turkuaz-installer-studio.exe'
+          cargo build --locked --manifest-path $manifest -p turkuaz-installer-cli --release --bin turkuaz-installer --features setup-authoring-gui
+          if ($LASTEXITCODE -ne 0) { throw 'TurkuazInstaller GUI build failed.' }
+          Copy-Item -LiteralPath $bin -Destination $stub -Force
+          cargo build --locked --manifest-path $manifest -p turkuaz-installer-cli --release --bin turkuaz-installer --no-default-features
+          if ($LASTEXITCODE -ne 0) { throw 'TurkuazInstaller console CLI build failed.' }
+          if (-not (Test-Path -LiteralPath $stub -PathType Leaf)) { throw 'GUI stub missing.' }
 
       - name: Build UniZip native setup
         shell: pwsh
@@ -94,7 +103,7 @@ jobs:
           $Setup = Join-Path $Target ('UniZip-Setup-' + $Version + '.exe')
           & $Cli build-package --package-id com.turkuazlabs.unizip --version $Version --source $Source --output $Package
           if ($LASTEXITCODE -ne 0) { throw 'UniZip .tzpkg build failed.' }
-          & $Cli build-native-setup --stub $Cli --package $Package --output $Setup
+          & $Cli build-native-setup --stub 'turkuaz-installer-source/rust/target/release/turkuaz-installer-studio.exe' --package $Package --output $Setup
           if ($LASTEXITCODE -ne 0) { throw 'UniZip native Setup build failed.' }
           $files = @($Package, $Setup)
           $lines = foreach ($file in $files) {
