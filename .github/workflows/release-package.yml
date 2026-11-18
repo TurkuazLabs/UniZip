@@ -1,7 +1,7 @@
 # 📄 Dosya Yolu: .github/workflows/release-package.yml
 # 📌 Amac: UniZip tag yayinlarinda Desktop portable paket, update manifest ve OpenCart OCMOD uretmek
 # 📌 Modul - FileType
-# Version: 0.3.1
+# Version: 0.3.2
 # Aciklama: Maven build, ZIP paket, SHA-256 manifest ve OCMOD artifact pipeline tanimi
 # Bagimli Oldugu Katman: Tool | Config
 
@@ -10,10 +10,11 @@ name: UniZip Release Package
 on:
   pull_request:
     branches: [main]
-  workflow_dispatch:
   push:
+    branches: [main]
     tags:
       - 'v*'
+  workflow_dispatch:
 
 jobs:
   package-release:
@@ -65,6 +66,44 @@ jobs:
           '@ | Set-Content "$dist/UniZip.bat" -Encoding ASCII
           Compress-Archive -Path "$dist/*" -DestinationPath "dist/UniZip_v${env:UNIZIP_VERSION}_portable.zip" -Force
 
+      # @dev-id UNIZIP-TI-SETUP-001
+      # TurkuazInstaller Community engine must remain fixed to reviewed source.
+      - name: Checkout pinned TurkuazInstaller v0.2.24
+        uses: actions/checkout@v4
+        with:
+          repository: TurkuazLabs/TurkuazInstaller
+          ref: 10101dee8b6efe4775f5cf72aa05f3a3da934bfa
+          path: turkuaz-installer-source
+          persist-credentials: false
+
+      - name: Build TurkuazInstaller engine
+        shell: pwsh
+        run: |
+          cargo build --locked --manifest-path turkuaz-installer-source/rust/Cargo.toml -p turkuaz-installer-cli --release --bin turkuaz-installer --features setup-authoring-gui
+          if ($LASTEXITCODE -ne 0) { throw 'TurkuazInstaller Rust build failed.' }
+
+      - name: Build UniZip native setup
+        shell: pwsh
+        run: |
+          $Version = $env:UNIZIP_VERSION
+          $Cli = 'turkuaz-installer-source/rust/target/release/turkuaz-installer.exe'
+          $Source = Join-Path $PWD ('dist/UniZip_v' + $Version + '_portable')
+          $Target = Join-Path $PWD 'dist/installer'
+          New-Item -ItemType Directory -Force -Path $Target | Out-Null
+          $Package = Join-Path $Target ('UniZip-' + $Version + '.tzpkg')
+          $Setup = Join-Path $Target ('UniZip-Setup-' + $Version + '.exe')
+          & $Cli build-package --package-id com.turkuazlabs.unizip --version $Version --source $Source --output $Package
+          if ($LASTEXITCODE -ne 0) { throw 'UniZip .tzpkg build failed.' }
+          & $Cli build-native-setup --stub $Cli --package $Package --output $Setup
+          if ($LASTEXITCODE -ne 0) { throw 'UniZip native Setup build failed.' }
+          $files = @($Package, $Setup)
+          $lines = foreach ($file in $files) {
+            if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Missing installer artifact: $file" }
+            $hash = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $([IO.Path]::GetFileName($file))"
+          }
+          $lines | Set-Content -LiteralPath (Join-Path $Target 'SHA256SUMS.txt') -Encoding ascii
+
       - name: Generate Update Manifest
         shell: pwsh
         run: |
@@ -83,3 +122,6 @@ jobs:
             dist/UniZip_v${{ env.UNIZIP_VERSION }}_portable.zip
             dist/update.yml
             dist/turkuaz_entitlement_api_v${{ env.ENTITLEMENT_VERSION }}_oc3.ocmod.zip
+            dist/installer/UniZip-${{ env.UNIZIP_VERSION }}.tzpkg
+            dist/installer/UniZip-Setup-${{ env.UNIZIP_VERSION }}.exe
+            dist/installer/SHA256SUMS.txt
