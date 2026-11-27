@@ -1,9 +1,11 @@
-# 📄 Dosya Yolu: CHANGELOG.md
-# 📌 Amac: UniZip monorepo seviyesindeki yapisal degisiklikleri kaydetmek
-# 📌 Modul - FileType
-# Version: 0.3.1
-# Aciklama: Desktop public runtime bootstrap ve monorepo yapisal degisikliklerini kaydeder
+<!--
+Dosya Yolu: REPO_ROOT/CHANGELOG.md
+Amac: UniZip monorepo seviyesindeki yapisal degisiklikleri kaydetmek
+Modul - Markdown
+Version: 0.3.1
+Aciklama: Desktop public runtime bootstrap ve monorepo yapisal degisikliklerini kaydeder
 Bagimli Oldugu Katman: Config | Tool
+-->
 
 # Changelog
 
