@@ -1,9 +1,11 @@
-# 📄 Dosya Yolu: README.md
-# 📌 Amac: UniZip Community monorepo yapisini, edition sinirlarini ve gelistirme komutlarini aciklamak
-# 📌 Modul - FileType
-# Version: 0.3.1
-# Aciklama: Desktop public runtime bootstrap, OpenCart entegrasyonu, Community lisansi ve Pro ayrimini tanimlar
+<!--
+Dosya Yolu: REPO_ROOT/README.md
+Amac: UniZip Community monorepo yapisini, edition sinirlarini ve gelistirme komutlarini aciklamak
+Modul - Markdown
+Version: 0.3.1
+Aciklama: Desktop public runtime bootstrap, OpenCart entegrasyonu, Community lisansi ve Pro ayrimini tanimlar
 Bagimli Oldugu Katman: Controller | Service | Repo/Model | Tool | View | Language | Config
+-->
 
 # UniZip Community Monorepo
 
